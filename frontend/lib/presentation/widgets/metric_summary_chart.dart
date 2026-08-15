@@ -31,10 +31,10 @@ class MetricSummaryChart extends StatelessWidget {
           children: [
             const Flexible(
               child: Text(
-                'Passive Health Telemetry',
+                'Health Telemetry',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 8),
