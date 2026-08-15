@@ -16,6 +16,12 @@ class MetricDao extends DatabaseAccessor<AppDatabase> with _$MetricDaoMixin {
     });
   }
 
+  Future<void> cleanupLegacyHealthConnectDuplicates() async {
+    await customStatement(
+      "DELETE FROM health_metrics_table WHERE source = 'health_connect' AND id NOT GLOB 'hc-*-????-??-??';",
+    );
+  }
+
   Future<List<HealthMetricsTableData>> getMetricsSince(DateTime since) {
     return (select(healthMetricsTable)
           ..where((tbl) => tbl.syncedAt.isBiggerThanValue(since))

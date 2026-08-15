@@ -30,6 +30,7 @@ class OfflineMetricRepository {
         )
         .toList();
 
+    await db.metricDao.cleanupLegacyHealthConnectDuplicates();
     await db.metricDao.batchUpsertMetrics(companions);
 
     // Sync to backend if online

@@ -51,6 +51,16 @@ final metricSeriesProvider =
         Duration(days: days - 1),
       );
 
+      try {
+        if (await HealthConnectChannel.isAvailable() &&
+            await HealthConnectChannel.hasPermissions()) {
+          final points = await HealthConnectChannel.getHealthHistory(days: days);
+          if (points.isNotEmpty) {
+            await repo.ingestMetrics(points);
+          }
+        }
+      } catch (_) {}
+
       return repo.getMetricSeries(metric, from, to);
     });
 
@@ -60,7 +70,6 @@ final dailyMetricSummaryProvider =
       final dateStr = ref.watch(selectedDateProvider);
       final date = DateTime.tryParse(dateStr) ?? DateTime.now();
 
-      // On Android, attempt to read fresh aggregates from Health Connect first if permissions granted
       try {
         if (await HealthConnectChannel.isAvailable() &&
             await HealthConnectChannel.hasPermissions()) {

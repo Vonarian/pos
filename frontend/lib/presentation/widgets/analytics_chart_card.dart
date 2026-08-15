@@ -144,7 +144,11 @@ class AnalyticsChartCard extends StatelessWidget {
     for (final p in points) {
       final pDate = DateTime(p.startTime.year, p.startTime.month, p.startTime.day);
       if (dailyValues.containsKey(pDate)) {
-        dailyValues[pDate] = metric == MetricType.weight ? p.value : (dailyValues[pDate] ?? 0.0) + p.value;
+        if (metric == MetricType.weight || p.source == 'health_connect') {
+          dailyValues[pDate] = p.value;
+        } else {
+          dailyValues[pDate] = (dailyValues[pDate] ?? 0.0) + p.value;
+        }
       }
     }
 

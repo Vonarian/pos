@@ -39,84 +39,102 @@ class HealthConnectChannel {
   }
 
   static Future<List<HealthDataPoint>> getTodayAggregates() async {
+    final history = await getHealthHistory(days: 1);
+    return history;
+  }
+
+  static Future<List<HealthDataPoint>> getHealthHistory({int days = 30}) async {
     if (!Platform.isAndroid) return [];
     try {
-      final result = await _channel.invokeMapMethod<String, dynamic>(
-        'getTodayAggregates',
+      final list = await _channel.invokeListMethod<Map<dynamic, dynamic>>(
+        'getHealthHistory',
+        {'days': days},
       );
-      if (result == null) return [];
+      if (list == null) return [];
 
       final now = DateTime.now();
-      final dateStr = DateFormat('yyyy-MM-dd').format(now);
-      final startOfDay = DateTime(now.year, now.month, now.day);
-      final list = <HealthDataPoint>[];
+      final points = <HealthDataPoint>[];
 
-      if (result.containsKey('steps')) {
-        list.add(
-          HealthDataPoint(
+      for (final raw in list) {
+        final item = Map<String, dynamic>.from(raw);
+        final dateStr = item['date'] as String? ?? DateFormat('yyyy-MM-dd').format(now);
+        final parsedDate = DateTime.tryParse(dateStr) ?? now;
+        final startOfDay = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+        final endOfDay = DateTime(parsedDate.year, parsedDate.month, parsedDate.day, 23, 59, 59);
+
+        final steps = (item['steps'] as num?)?.toDouble() ?? 0.0;
+        if (steps > 0) {
+          points.add(HealthDataPoint(
             id: 'hc-steps-$dateStr',
             source: 'health_connect',
             metric: MetricType.steps,
-            value: (result['steps'] as num).toDouble(),
+            value: steps,
             unit: 'count',
             startTime: startOfDay,
-            endTime: now,
+            endTime: endOfDay,
             syncedAt: now,
-          ),
-        );
-      }
+          ));
+        }
 
-      if (result.containsKey('calories')) {
-        list.add(
-          HealthDataPoint(
+        final calories = (item['calories'] as num?)?.toDouble() ?? 0.0;
+        if (calories > 0) {
+          points.add(HealthDataPoint(
             id: 'hc-cal-$dateStr',
             source: 'health_connect',
             metric: MetricType.caloriesBurned,
-            value: (result['calories'] as num).toDouble(),
+            value: calories,
             unit: 'kcal',
             startTime: startOfDay,
-            endTime: now,
+            endTime: endOfDay,
             syncedAt: now,
-          ),
-        );
-      }
+          ));
+        }
 
-      if (result.containsKey('sleepMinutes')) {
-        list.add(
-          HealthDataPoint(
+        final sleepMin = (item['sleepMinutes'] as num?)?.toDouble() ?? 0.0;
+        if (sleepMin > 0) {
+          points.add(HealthDataPoint(
             id: 'hc-sleep-$dateStr',
             source: 'health_connect',
             metric: MetricType.sleepDuration,
-            value: (result['sleepMinutes'] as num).toDouble(),
+            value: sleepMin,
             unit: 'minutes',
-            startTime: now.subtract(const Duration(hours: 24)),
-            endTime: now,
+            startTime: startOfDay,
+            endTime: endOfDay,
             syncedAt: now,
-          ),
-        );
-      }
+          ));
+        }
 
-      if (result.containsKey('weightKg')) {
-        final weight = (result['weightKg'] as num).toDouble();
+        final weight = (item['weightKg'] as num?)?.toDouble() ?? 0.0;
         if (weight > 0) {
-          list.add(
-            HealthDataPoint(
-              id: 'hc-weight-$dateStr',
-              source: 'health_connect',
-              metric: MetricType.weight,
-              value: weight,
-              unit: 'kg',
-              startTime: now,
-              endTime: now,
-              syncedAt: now,
-            ),
-          );
+          points.add(HealthDataPoint(
+            id: 'hc-weight-$dateStr',
+            source: 'health_connect',
+            metric: MetricType.weight,
+            value: weight,
+            unit: 'kg',
+            startTime: startOfDay,
+            endTime: endOfDay,
+            syncedAt: now,
+          ));
         }
       }
 
-      return list;
+      return points;
     } catch (_) {
       return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> getRawHealthData({int days = 30}) async {
+    if (!Platform.isAndroid) return {};
+    try {
+      final res = await _channel.invokeMapMethod<String, dynamic>(
+        'getRawHealthData',
+        {'days': days},
+      );
+      return res ?? {};
+    } catch (_) {
+      return {};
     }
   }
 }

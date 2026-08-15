@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/native/health_connect_channel.dart';
 import '../providers/metric_provider.dart';
 import '../providers/routine_provider.dart';
 
@@ -42,9 +43,32 @@ class _SyncAppBarButtonState extends ConsumerState<SyncAppBarButton>
 
     final repo = ref.read(offlineRoutineRepositoryProvider);
     try {
+      final raw = await HealthConnectChannel.getRawHealthData(days: 14);
+      final sleep = raw['sleep'] as List? ?? [];
+      final totalCal = raw['totalCalories'] as List? ?? [];
+      final activeCal = raw['activeCalories'] as List? ?? [];
+      final weight = raw['weight'] as List? ?? [];
+      final steps = raw['steps'] as List? ?? [];
+
+      debugPrint('=== [RAW_HEALTH_DUMP] ===');
+      for (final s in sleep) {
+        debugPrint('[RAW_SLEEP_RECORD] $s');
+      }
+      for (final c in totalCal) {
+        debugPrint('[RAW_TOTAL_CAL_RECORD] $c');
+      }
+      for (final a in activeCal) {
+        debugPrint('[RAW_ACTIVE_CAL_RECORD] $a');
+      }
+      for (final w in weight) {
+        debugPrint('[RAW_WEIGHT_RECORD] $w');
+      }
+      debugPrint('[RAW_STEPS_SUMMARY] total steps chunks: ${steps.length}');
+
       await repo.syncWithServer();
       ref.invalidate(routinesStreamProvider);
       ref.invalidate(dailyMetricSummaryProvider);
+      ref.invalidate(metricSeriesProvider);
     } finally {
       if (mounted) {
         _controller.stop();
