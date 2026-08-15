@@ -1,10 +1,12 @@
 import 'dart:convert';
-
 import 'package:drift/drift.dart';
 
 import '../local/database.dart';
 import '../remote/api_client.dart';
 import '../../domain/models/routine_item.dart';
+import 'offline_routine_mapper.dart';
+import 'offline_routine_spawner.dart';
+import 'offline_routine_sync_handler.dart';
 
 class OfflineRoutineRepository {
   final AppDatabase db;
@@ -13,28 +15,27 @@ class OfflineRoutineRepository {
   OfflineRoutineRepository({required this.db, this.apiClient});
 
   Stream<List<RoutineItem>> watchRoutinesForDate(String date) {
+    OfflineRoutineSpawner.ensureSpawnedForDate(db, date);
     return db.routineDao.watchRoutinesForDate(date).map((rows) {
-      return rows.map(_mapRowToDomain).toList();
+      return rows.map(OfflineRoutineMapper.mapRowToDomain).toList();
     });
   }
 
   Future<List<RoutineItem>> getRoutinesForDate(String date) async {
+    await OfflineRoutineSpawner.ensureSpawnedForDate(db, date);
     final rows = await db.routineDao.getRoutinesForDate(date);
-    return rows.map(_mapRowToDomain).toList();
+    return rows.map(OfflineRoutineMapper.mapRowToDomain).toList();
   }
 
   Future<void> completeRoutine(String id, {DateTime? completedAt}) async {
     final now = completedAt ?? DateTime.now();
     await db.routineDao.updateStatus(id, 'COMPLETED', now);
 
-    // Optimistic background sync to API
     if (apiClient != null) {
       try {
         await apiClient!.completeRoutine(id, completedAt: now);
         await db.routineDao.markAsSynced([id]);
-      } catch (_) {
-        // Will sync later via background sync queue
-      }
+      } catch (_) {}
     }
   }
 
@@ -45,9 +46,7 @@ class OfflineRoutineRepository {
       try {
         await apiClient!.skipRoutine(id);
         await db.routineDao.markAsSynced([id]);
-      } catch (_) {
-        // Will sync later
-      }
+      } catch (_) {}
     }
   }
 
@@ -58,14 +57,65 @@ class OfflineRoutineRepository {
       try {
         await apiClient!.revertRoutine(id);
         await db.routineDao.markAsSynced([id]);
-      } catch (_) {
-        // Will sync later
-      }
+      } catch (_) {}
     }
   }
 
-  Future<void> deleteRoutine(String id) async {
+  Future<void> deleteRoutine(String id, {bool deleteEverywhere = true}) async {
+    final item = await db.routineDao.getRoutineById(id);
     await db.routineDao.deleteRoutine(id);
+
+    if (deleteEverywhere && item?.templateId != null) {
+      await db.routineTemplateDao.deactivateTemplate(item!.templateId!);
+      await db.routineDao.deleteRoutinesByTemplateId(item.templateId!);
+    }
+  }
+
+  Future<void> updateRoutine(RoutineItem item, {bool applyToFuture = true}) async {
+    final existing = await db.routineDao.getRoutineById(item.id);
+    final effectiveTemplateId = item.templateId ?? existing?.templateId;
+    final itemToSave = item.copyWith(templateId: effectiveTemplateId);
+
+    await db.routineDao.upsertRoutine(
+      OfflineRoutineMapper.mapDomainToCompanion(itemToSave, isSynced: false),
+    );
+
+    if (applyToFuture && effectiveTemplateId != null) {
+      final days =
+          (item.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
+              ? item.reminderConfig!.daysOfWeek
+              : const [1, 2, 3, 4, 5, 6, 7];
+
+      await db.routineTemplateDao.upsertTemplate(
+        RoutineTemplatesTableCompanion.insert(
+          id: effectiveTemplateId,
+          title: item.title,
+          category: item.category,
+          timeWindow: item.timeWindow.value,
+          daysOfWeekJson: Value(jsonEncode(days)),
+          metadataJson: Value(jsonEncode(item.metadata)),
+          isActive: const Value(true),
+          createdAt: item.createdAt,
+          updatedAt: DateTime.now(),
+          isSynced: const Value(false),
+        ),
+      );
+
+      await db.routineDao.updatePendingRoutinesByTemplateId(
+        templateId: effectiveTemplateId,
+        title: item.title,
+        category: item.category,
+        timeWindow: item.timeWindow.value,
+        metadataJson: jsonEncode(item.metadata),
+      );
+    }
+
+    if (apiClient != null) {
+      try {
+        await apiClient!.pushSync(routines: [itemToSave], metrics: []);
+        await db.routineDao.markAsSynced([itemToSave.id]);
+      } catch (_) {}
+    }
   }
 
   Future<void> deferRoutine(String id) async {
@@ -73,7 +123,7 @@ class OfflineRoutineRepository {
     if (item == null) return;
 
     final currentWindow = TimeWindow.fromString(item.timeWindow);
-    TimeWindow nextWindow;
+    TimeWindow nextWindow = currentWindow;
     switch (currentWindow) {
       case TimeWindow.morning:
         nextWindow = TimeWindow.afternoon;
@@ -82,8 +132,6 @@ class OfflineRoutineRepository {
         nextWindow = TimeWindow.evening;
         break;
       case TimeWindow.evening:
-        nextWindow = TimeWindow.night;
-        break;
       case TimeWindow.night:
         nextWindow = TimeWindow.night;
         break;
@@ -95,95 +143,49 @@ class OfflineRoutineRepository {
       try {
         await apiClient!.deferRoutine(id);
         await db.routineDao.markAsSynced([id]);
-      } catch (_) {
-        // Will sync later
-      }
+      } catch (_) {}
     }
   }
 
   Future<void> createRoutine(RoutineItem item) async {
+    final templateId = item.templateId ?? 'tpl_${item.id}';
+    final days =
+        (item.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
+            ? item.reminderConfig!.daysOfWeek
+            : const [1, 2, 3, 4, 5, 6, 7];
+
+    await db.routineTemplateDao.upsertTemplate(
+      RoutineTemplatesTableCompanion.insert(
+        id: templateId,
+        title: item.title,
+        category: item.category,
+        timeWindow: item.timeWindow.value,
+        daysOfWeekJson: Value(jsonEncode(days)),
+        metadataJson: Value(jsonEncode(item.metadata)),
+        isActive: const Value(true),
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        isSynced: const Value(false),
+      ),
+    );
+
+    final itemWithTemplate = item.copyWith(templateId: templateId);
     await db.routineDao.upsertRoutine(
-      _mapDomainToCompanion(item, isSynced: false),
+      OfflineRoutineMapper.mapDomainToCompanion(
+        itemWithTemplate,
+        isSynced: false,
+      ),
     );
 
     if (apiClient != null) {
       try {
-        await apiClient!.pushSync(routines: [item], metrics: []);
-        await db.routineDao.markAsSynced([item.id]);
-      } catch (_) {
-        // Will sync later
-      }
+        await apiClient!.pushSync(routines: [itemWithTemplate], metrics: []);
+        await db.routineDao.markAsSynced([itemWithTemplate.id]);
+      } catch (_) {}
     }
   }
 
   Future<void> syncWithServer() async {
-    if (apiClient == null) return;
-
-    try {
-      // 1. Push unsynced
-      final unsynced = await db.routineDao.getUnsyncedRoutines();
-      if (unsynced.isNotEmpty) {
-        final domainItems = unsynced.map(_mapRowToDomain).toList();
-        await apiClient!.pushSync(routines: domainItems, metrics: []);
-        await db.routineDao.markAsSynced(domainItems.map((e) => e.id).toList());
-      }
-
-      // 2. Pull remote changes
-      final pullData = await apiClient!.pullSync();
-      if (pullData['routines'] != null) {
-        final remoteRoutines = (pullData['routines'] as List)
-            .map((e) => RoutineItem.fromJson(e as Map<String, dynamic>))
-            .toList();
-
-        final companions = remoteRoutines
-            .map((e) => _mapDomainToCompanion(e, isSynced: true))
-            .toList();
-
-        await db.routineDao.batchUpsertRoutines(companions);
-      }
-    } catch (_) {
-      // Network failure gracefully handled
-    }
-  }
-
-  RoutineItem _mapRowToDomain(RoutineItemsTableData row) {
-    Map<String, dynamic> meta = {};
-    try {
-      meta = jsonDecode(row.metadataJson) as Map<String, dynamic>;
-    } catch (_) {}
-
-    return RoutineItem(
-      id: row.id,
-      templateId: row.templateId,
-      title: row.title,
-      category: row.category,
-      timeWindow: TimeWindow.fromString(row.timeWindow),
-      scheduledDate: row.scheduledDate,
-      status: ItemStatus.fromString(row.status),
-      completedAt: row.completedAt,
-      metadata: meta,
-      updatedAt: row.updatedAt,
-      createdAt: row.createdAt,
-    );
-  }
-
-  RoutineItemsTableCompanion _mapDomainToCompanion(
-    RoutineItem item, {
-    bool isSynced = false,
-  }) {
-    return RoutineItemsTableCompanion.insert(
-      id: item.id,
-      templateId: Value(item.templateId),
-      title: item.title,
-      category: item.category,
-      timeWindow: item.timeWindow.value,
-      scheduledDate: item.scheduledDate,
-      status: Value(item.status.value),
-      completedAt: Value(item.completedAt),
-      metadataJson: Value(jsonEncode(item.metadata)),
-      updatedAt: item.updatedAt,
-      createdAt: item.createdAt,
-      isSynced: Value(isSynced),
-    );
+    await OfflineRoutineSyncHandler.syncWithServer(db, apiClient);
   }
 }
