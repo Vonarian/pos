@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../../domain/models/health_data_point.dart';
 
@@ -46,13 +47,14 @@ class HealthConnectChannel {
       if (result == null) return [];
 
       final now = DateTime.now();
+      final dateStr = DateFormat('yyyy-MM-dd').format(now);
       final startOfDay = DateTime(now.year, now.month, now.day);
       final list = <HealthDataPoint>[];
 
       if (result.containsKey('steps')) {
         list.add(
           HealthDataPoint(
-            id: 'hc-steps-${now.millisecondsSinceEpoch}',
+            id: 'hc-steps-$dateStr',
             source: 'health_connect',
             metric: MetricType.steps,
             value: (result['steps'] as num).toDouble(),
@@ -67,7 +69,7 @@ class HealthConnectChannel {
       if (result.containsKey('calories')) {
         list.add(
           HealthDataPoint(
-            id: 'hc-cal-${now.millisecondsSinceEpoch}',
+            id: 'hc-cal-$dateStr',
             source: 'health_connect',
             metric: MetricType.caloriesBurned,
             value: (result['calories'] as num).toDouble(),
@@ -82,7 +84,7 @@ class HealthConnectChannel {
       if (result.containsKey('sleepMinutes')) {
         list.add(
           HealthDataPoint(
-            id: 'hc-sleep-${now.millisecondsSinceEpoch}',
+            id: 'hc-sleep-$dateStr',
             source: 'health_connect',
             metric: MetricType.sleepDuration,
             value: (result['sleepMinutes'] as num).toDouble(),
@@ -99,7 +101,7 @@ class HealthConnectChannel {
         if (weight > 0) {
           list.add(
             HealthDataPoint(
-              id: 'hc-weight-${now.millisecondsSinceEpoch}',
+              id: 'hc-weight-$dateStr',
               source: 'health_connect',
               metric: MetricType.weight,
               value: weight,

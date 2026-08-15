@@ -117,12 +117,11 @@ func (m *MetricRepo) ListSince(ctx context.Context, since time.Time) ([]domain.H
 }
 
 func (m *MetricRepo) GetDailySummary(ctx context.Context, date string) (map[domain.MetricType]float64, error) {
-	// Group metrics by day start and end
 	query := `
-		SELECT metric, SUM(value) as total_val
+		SELECT id, metric, value
 		FROM health_metrics
 		WHERE DATE(start_time) = $1
-		GROUP BY metric
+		ORDER BY start_time ASC
 	`
 	rows, err := m.db.Pool.Query(ctx, query, date)
 	if err != nil {
@@ -132,12 +131,19 @@ func (m *MetricRepo) GetDailySummary(ctx context.Context, date string) (map[doma
 
 	summary := make(map[domain.MetricType]float64)
 	for rows.Next() {
+		var id string
 		var metric domain.MetricType
-		var total float64
-		if err := rows.Scan(&metric, &total); err != nil {
+		var val float64
+		if err := rows.Scan(&id, &metric, &val); err != nil {
 			return nil, fmt.Errorf("failed to scan daily summary row: %w", err)
 		}
-		summary[metric] = total
+		if metric == domain.MetricWeight || metric == domain.MetricBodyFat {
+			summary[metric] = val
+		} else if len(id) >= 3 && id[:3] == "hc-" {
+			summary[metric] = val
+		} else {
+			summary[metric] += val
+		}
 	}
 
 	return summary, nil

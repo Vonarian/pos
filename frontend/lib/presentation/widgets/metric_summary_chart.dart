@@ -29,11 +29,17 @@ class MetricSummaryChart extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Passive Health Telemetry',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            const Flexible(
+              child: Text(
+                'Passive Health Telemetry',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
             ),
+            const SizedBox(width: 8),
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (onRefresh != null && isConnected) ...[
                   IconButton(
@@ -96,11 +102,15 @@ class MetricSummaryChart extends StatelessWidget {
                     children: [
                       const Text(
                         'Connect Health Connect',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Sync steps, calories, sleep & weight passively',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
                       ),
                     ],
@@ -109,7 +119,7 @@ class MetricSummaryChart extends StatelessWidget {
                 const SizedBox(width: 8),
                 FilledButton.tonal(
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   onPressed: onConnect,
                   child: const Text('Grant Access', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -211,12 +221,16 @@ class _MetricCard extends StatelessWidget {
             children: [
               Icon(icon, size: 16, color: color),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade400,
-                  fontWeight: FontWeight.w500,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade400,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -224,6 +238,8 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),

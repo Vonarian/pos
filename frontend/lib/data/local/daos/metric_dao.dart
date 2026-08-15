@@ -56,16 +56,24 @@ class MetricDao extends DatabaseAccessor<AppDatabase> with _$MetricDaoMixin {
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     final points =
-        await (select(healthMetricsTable)..where(
-              (tbl) =>
-                  tbl.startTime.isBiggerOrEqualValue(startOfDay) &
-                  tbl.startTime.isSmallerThanValue(endOfDay),
-            ))
+        await (select(healthMetricsTable)
+              ..where(
+                (tbl) =>
+                    tbl.startTime.isBiggerOrEqualValue(startOfDay) &
+                    tbl.startTime.isSmallerThanValue(endOfDay),
+              )
+              ..orderBy([(t) => OrderingTerm(expression: t.startTime)]))
             .get();
 
     final summary = <String, double>{};
     for (final pt in points) {
-      summary[pt.metric] = (summary[pt.metric] ?? 0.0) + pt.value;
+      if (pt.metric == 'WEIGHT' || pt.metric == 'BODY_FAT') {
+        summary[pt.metric] = pt.value;
+      } else if (pt.id.startsWith('hc-')) {
+        summary[pt.metric] = pt.value;
+      } else {
+        summary[pt.metric] = (summary[pt.metric] ?? 0.0) + pt.value;
+      }
     }
     return summary;
   }
