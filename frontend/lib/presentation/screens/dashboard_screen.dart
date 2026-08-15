@@ -27,7 +27,7 @@ class DashboardScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.bolt_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
@@ -44,9 +44,11 @@ class DashboardScreen extends ConsumerWidget {
               await repo.syncWithServer();
               ref.invalidate(routinesStreamProvider);
               ref.invalidate(dailyMetricSummaryProvider);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Synchronized with Go backend')),
-              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Synchronized with Go backend')),
+                );
+              }
             },
           ),
         ],
@@ -69,12 +71,15 @@ class DashboardScreen extends ConsumerWidget {
                   onPressed: () {
                     final curr = DateTime.parse(selectedDate);
                     final prev = curr.subtract(const Duration(days: 1));
-                    ref.read(selectedDateProvider.notifier).state =
-                        DateFormat('yyyy-MM-dd').format(prev);
+                    ref.read(selectedDateProvider.notifier).setDate(
+                          DateFormat('yyyy-MM-dd').format(prev),
+                        );
                   },
                 ),
                 Text(
-                  isToday ? "Today (${DateFormat('MMM d').format(DateTime.parse(selectedDate))})" : DateFormat('EEEE, MMM d').format(DateTime.parse(selectedDate)),
+                  isToday
+                      ? "Today (${DateFormat('MMM d').format(DateTime.parse(selectedDate))})"
+                      : DateFormat('EEEE, MMM d').format(DateTime.parse(selectedDate)),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
@@ -82,8 +87,9 @@ class DashboardScreen extends ConsumerWidget {
                   onPressed: () {
                     final curr = DateTime.parse(selectedDate);
                     final next = curr.add(const Duration(days: 1));
-                    ref.read(selectedDateProvider.notifier).state =
-                        DateFormat('yyyy-MM-dd').format(next);
+                    ref.read(selectedDateProvider.notifier).setDate(
+                          DateFormat('yyyy-MM-dd').format(next),
+                        );
                   },
                 ),
               ],
@@ -94,7 +100,7 @@ class DashboardScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -121,7 +127,7 @@ class DashboardScreen extends ConsumerWidget {
                     child: CircularProgressIndicator(
                       value: quadrantState.adherenceRate,
                       strokeWidth: 4,
-                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      backgroundColor: Colors.grey.withValues(alpha: 0.2),
                     ),
                   ),
                 ],
@@ -248,7 +254,7 @@ class DashboardScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: category,
+                          initialValue: category,
                           decoration: const InputDecoration(
                             labelText: 'Category',
                             border: OutlineInputBorder(),
@@ -265,7 +271,7 @@ class DashboardScreen extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: DropdownButtonFormField<TimeWindow>(
-                          value: window,
+                          initialValue: window,
                           decoration: const InputDecoration(
                             labelText: 'Time Window',
                             border: OutlineInputBorder(),
@@ -304,7 +310,9 @@ class DashboardScreen extends ConsumerWidget {
                           createdAt: now,
                         );
                         await repo.createRoutine(item);
-                        Navigator.pop(ctx);
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                        }
                       },
                       child: const Text('Save Ticket', style: TextStyle(fontSize: 16)),
                     ),

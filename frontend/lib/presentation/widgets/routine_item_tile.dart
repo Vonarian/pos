@@ -35,9 +35,9 @@ class RoutineItemTile extends StatelessWidget {
     final isMissed = item.status == ItemStatus.missed;
 
     Color cardBg = Theme.of(context).cardColor;
-    if (isDone) cardBg = Colors.teal.withOpacity(0.08);
-    if (isSkipped) cardBg = Colors.grey.withOpacity(0.06);
-    if (isMissed) cardBg = Colors.red.withOpacity(0.06);
+    if (isDone) cardBg = Colors.teal.withValues(alpha: 0.08);
+    if (isSkipped) cardBg = Colors.grey.withValues(alpha: 0.06);
+    if (isMissed) cardBg = Colors.red.withValues(alpha: 0.06);
 
     return Card(
       elevation: 0,
@@ -46,8 +46,8 @@ class RoutineItemTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isDone
-              ? Colors.teal.withOpacity(0.3)
-              : Theme.of(context).dividerColor.withOpacity(0.2),
+              ? Colors.teal.withValues(alpha: 0.3)
+              : Theme.of(context).dividerColor.withValues(alpha: 0.2),
         ),
       ),
       color: cardBg,
@@ -79,7 +79,7 @@ class RoutineItemTile extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(item.category).withOpacity(0.15),
+                          color: _getCategoryColor(item.category).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(

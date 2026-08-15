@@ -6,4 +6,13 @@ part of 'routine_dao.dart';
 mixin _$RoutineDaoMixin on DatabaseAccessor<AppDatabase> {
   $RoutineItemsTableTable get routineItemsTable =>
       attachedDatabase.routineItemsTable;
+  RoutineDaoManager get managers => RoutineDaoManager(this);
+}
+
+class RoutineDaoManager {
+  final _$RoutineDaoMixin _db;
+  RoutineDaoManager(this._db);
+  $$RoutineItemsTableTableTableManager get routineItemsTable =>
+      $$RoutineItemsTableTableTableManager(
+          _db.attachedDatabase, _db.routineItemsTable);
 }

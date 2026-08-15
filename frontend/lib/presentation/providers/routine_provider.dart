@@ -21,9 +21,18 @@ final offlineRoutineRepositoryProvider = Provider<OfflineRoutineRepository>((ref
   return OfflineRoutineRepository(db: db, apiClient: client);
 });
 
-final selectedDateProvider = StateProvider<String>((ref) {
-  return DateFormat('yyyy-MM-dd').format(DateTime.now());
-});
+class SelectedDateNotifier extends Notifier<String> {
+  @override
+  String build() {
+    return DateFormat('yyyy-MM-dd').format(DateTime.now());
+  }
+
+  void setDate(String date) {
+    state = date;
+  }
+}
+
+final selectedDateProvider = NotifierProvider<SelectedDateNotifier, String>(SelectedDateNotifier.new);
 
 final routinesStreamProvider = StreamProvider.autoDispose<List<RoutineItem>>((ref) {
   final repo = ref.watch(offlineRoutineRepositoryProvider);

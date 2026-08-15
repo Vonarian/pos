@@ -37,14 +37,14 @@ class QuadrantCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isActive
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.6)
-              : Theme.of(context).dividerColor.withOpacity(0.2),
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6)
+              : Theme.of(context).dividerColor.withValues(alpha: 0.2),
           width: isActive ? 2.0 : 1.0,
         ),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 )
@@ -63,8 +63,8 @@ class QuadrantCard extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isActive
-                        ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
-                        : Colors.grey.withOpacity(0.1),
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
+                        : Colors.grey.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -140,7 +140,7 @@ class QuadrantCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 4,
-                  backgroundColor: Colors.grey.withOpacity(0.15),
+                  backgroundColor: Colors.grey.withValues(alpha: 0.15),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     progress == 1.0 ? Colors.teal : Theme.of(context).colorScheme.primary,
                   ),
