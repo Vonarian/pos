@@ -51,7 +51,7 @@ class MainActivity: FlutterFragmentActivity() {
                 pendingPermissionResult = result
                 requestPermissionsLauncher.launch(healthConnectManager.permissions)
             }
-            "getTodayAggregates" -> lifecycleScope.launch {
+            "getTodayAggregates", "getTodayMetrics" -> lifecycleScope.launch {
                 try {
                     result.success(healthConnectManager.readTodayMetrics())
                 } catch (e: Exception) {

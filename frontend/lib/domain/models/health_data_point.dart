@@ -1,6 +1,7 @@
 enum MetricType {
   steps('STEPS'),
   caloriesBurned('CALORIES_BURNED'),
+  caloriesConsumed('CALORIES_CONSUMED'),
   sleepDuration('SLEEP_DURATION'),
   weight('WEIGHT'),
   bodyFat('BODY_FAT'),
@@ -11,8 +12,10 @@ enum MetricType {
   const MetricType(this.value);
 
   static MetricType fromString(String val) {
+    final upper = val.toUpperCase();
+    if (upper == 'NUTRITION') return MetricType.caloriesConsumed;
     return MetricType.values.firstWhere(
-      (e) => e.value.toUpperCase() == val.toUpperCase(),
+      (e) => e.value.toUpperCase() == upper,
       orElse: () => MetricType.steps,
     );
   }

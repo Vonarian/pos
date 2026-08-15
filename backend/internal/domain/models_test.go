@@ -57,6 +57,20 @@ func TestHealthDataPointValidation(t *testing.T) {
 		t.Errorf("expected valid data point, got error: %v", err)
 	}
 
+	nutPt := domain.HealthDataPoint{
+		ID:        "dp-nut-1",
+		Source:    "health_connect",
+		Metric:    domain.MetricCaloriesConsumed,
+		Value:     2450,
+		Unit:      "kcal",
+		StartTime: time.Now().Add(-1 * time.Hour),
+		EndTime:   time.Now(),
+		SyncedAt:  time.Now(),
+	}
+	if err := nutPt.Validate(); err != nil {
+		t.Errorf("expected valid nutrition data point, got error: %v", err)
+	}
+
 	invalidPt := domain.HealthDataPoint{
 		ID:        "dp-2",
 		Source:    "health_connect",

@@ -21,11 +21,12 @@ const (
 type MetricType string
 
 const (
-	MetricSteps          MetricType = "STEPS"
-	MetricCaloriesBurned MetricType = "CALORIES_BURNED"
-	MetricSleepDuration  MetricType = "SLEEP_DURATION"
-	MetricWeight         MetricType = "WEIGHT"
-	MetricBodyFat        MetricType = "BODY_FAT"
-	MetricWorkoutSession MetricType = "WORKOUT_SESSION"
-	MetricWaterIntake    MetricType = "WATER_INTAKE"
+	MetricSteps            MetricType = "STEPS"
+	MetricCaloriesBurned   MetricType = "CALORIES_BURNED"
+	MetricCaloriesConsumed MetricType = "CALORIES_CONSUMED"
+	MetricSleepDuration    MetricType = "SLEEP_DURATION"
+	MetricWeight           MetricType = "WEIGHT"
+	MetricBodyFat          MetricType = "BODY_FAT"
+	MetricWorkoutSession   MetricType = "WORKOUT_SESSION"
+	MetricWaterIntake      MetricType = "WATER_INTAKE"
 )

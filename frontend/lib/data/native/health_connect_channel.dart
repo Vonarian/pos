@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
@@ -8,8 +9,13 @@ import '../../domain/models/health_data_point.dart';
 class HealthConnectChannel {
   static const MethodChannel _channel = MethodChannel('com.pos.app/health');
 
+  @visibleForTesting
+  static bool overrideIsAndroid = false;
+
+  static bool get _isAndroid => Platform.isAndroid || overrideIsAndroid;
+
   static Future<bool> isAvailable() async {
-    if (!Platform.isAndroid) return false;
+    if (!_isAndroid) return false;
     try {
       final available = await _channel.invokeMethod<bool>('checkAvailability');
       return available ?? false;
@@ -19,7 +25,7 @@ class HealthConnectChannel {
   }
 
   static Future<bool> hasPermissions() async {
-    if (!Platform.isAndroid) return false;
+    if (!_isAndroid) return false;
     try {
       final granted = await _channel.invokeMethod<bool>('hasPermissions');
       return granted ?? false;
@@ -29,7 +35,7 @@ class HealthConnectChannel {
   }
 
   static Future<bool> requestPermissions() async {
-    if (!Platform.isAndroid) return false;
+    if (!_isAndroid) return false;
     try {
       final granted = await _channel.invokeMethod<bool>('requestPermissions');
       return granted ?? false;
@@ -38,13 +44,28 @@ class HealthConnectChannel {
     }
   }
 
+  static Future<Map<String, double>> getTodayMetrics() async {
+    if (!_isAndroid) return {};
+    try {
+      final res = await _channel.invokeMapMethod<String, dynamic>('getTodayMetrics');
+      if (res == null) return {};
+      final map = <String, double>{};
+      map['STEPS'] = (res['steps'] as num?)?.toDouble() ?? 0.0;
+      map['CALORIES_BURNED'] = (res['calories'] as num?)?.toDouble() ?? 0.0;
+      map['SLEEP_DURATION'] = (res['sleepMinutes'] as num?)?.toDouble() ?? 0.0;
+      map['WEIGHT'] = (res['weightKg'] as num?)?.toDouble() ?? 0.0;
+      return map;
+    } catch (_) {
+      return {};
+    }
+  }
+
   static Future<List<HealthDataPoint>> getTodayAggregates() async {
-    final history = await getHealthHistory(days: 1);
-    return history;
+    return getHealthHistory(days: 1);
   }
 
   static Future<List<HealthDataPoint>> getHealthHistory({int days = 30}) async {
-    if (!Platform.isAndroid) return [];
+    if (!_isAndroid) return [];
     try {
       final list = await _channel.invokeListMethod<Map<dynamic, dynamic>>(
         'getHealthHistory',
@@ -126,7 +147,7 @@ class HealthConnectChannel {
   }
 
   static Future<Map<String, dynamic>> getRawHealthData({int days = 30}) async {
-    if (!Platform.isAndroid) return {};
+    if (!_isAndroid) return {};
     try {
       final res = await _channel.invokeMapMethod<String, dynamic>(
         'getRawHealthData',
