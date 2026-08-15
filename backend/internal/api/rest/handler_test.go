@@ -179,3 +179,75 @@ func TestSyncPushAndPull(t *testing.T) {
 		t.Fatalf("expected 1 routine and 1 metric, got %d and %d", len(pullResp.Routines), len(pullResp.Metrics))
 	}
 }
+
+func TestRevertRoutineEndpoint(t *testing.T) {
+	rRepo := &mockRoutineRepo{items: map[string]domain.RoutineItem{
+		"routine-1": {
+			ID:            "routine-1",
+			Title:         "Morning Stretch",
+			Category:      "HABIT",
+			TimeWindow:    domain.WindowMorning,
+			ScheduledDate: "2026-08-15",
+			Status:        domain.StatusCompleted,
+		},
+	}}
+	mRepo := &mockMetricRepo{}
+	rSvc := service.NewRoutineService(rRepo)
+	mSvc := service.NewMetricService(mRepo)
+	cSvc := service.NewCronService(rRepo)
+
+	server := rest.NewServer(rSvc, mSvc, cSvc, nil)
+	handler := server.Routes()
+
+	body, _ := json.Marshal(rest.ActionRequest{ID: "routine-1"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/routines/revert", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	item, _ := rRepo.GetByID(context.Background(), "routine-1")
+	if item.Status != domain.StatusPending {
+		t.Fatalf("expected routine to be PENDING after revert, got %s", item.Status)
+	}
+}
+
+func TestGetMetricSeriesEndpoint(t *testing.T) {
+	rRepo := &mockRoutineRepo{items: make(map[string]domain.RoutineItem)}
+	mRepo := &mockMetricRepo{points: []domain.HealthDataPoint{
+		{
+			ID:        "p1",
+			Source:    "health_connect",
+			Metric:    domain.MetricSteps,
+			Value:     10000,
+			Unit:      "count",
+			StartTime: time.Now().AddDate(0, 0, -1),
+			EndTime:   time.Now(),
+		},
+	}}
+	rSvc := service.NewRoutineService(rRepo)
+	mSvc := service.NewMetricService(mRepo)
+	cSvc := service.NewCronService(rRepo)
+
+	server := rest.NewServer(rSvc, mSvc, cSvc, nil)
+	handler := server.Routes()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/metrics/series?metric=STEPS&from=2026-08-01&to=2026-08-15", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var series []domain.HealthDataPoint
+	if err := json.NewDecoder(rec.Body).Decode(&series); err != nil {
+		t.Fatalf("failed to decode metric series: %v", err)
+	}
+	if len(series) != 1 {
+		t.Fatalf("expected 1 metric series item, got %d", len(series))
+	}
+}

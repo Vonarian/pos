@@ -38,8 +38,24 @@ class ApiClient {
     await _dio.post('/api/v1/routines/skip', data: {'id': id});
   }
 
+  Future<void> revertRoutine(String id) async {
+    await _dio.post('/api/v1/routines/revert', data: {'id': id});
+  }
+
   Future<void> deferRoutine(String id) async {
     await _dio.post('/api/v1/routines/defer', data: {'id': id});
+  }
+
+  Future<List<dynamic>> getMetricSeries(String metric, {String? from, String? to}) async {
+    final response = await _dio.get(
+      '/api/v1/metrics/series',
+      queryParameters: {
+        'metric': metric,
+        'from': ?from,
+        'to': ?to,
+      },
+    );
+    return response.data as List<dynamic>;
   }
 
   Future<Map<String, dynamic>> pushSync({

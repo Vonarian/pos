@@ -41,9 +41,19 @@ void main() {
     routines = await repo.getRoutinesForDate('2026-08-15');
     expect(routines.first.status, ItemStatus.completed);
 
+    // Revert item back to pending
+    await repo.revertRoutine('item-repo-1');
+    routines = await repo.getRoutinesForDate('2026-08-15');
+    expect(routines.first.status, ItemStatus.pending);
+
     // Defer item
     await repo.deferRoutine('item-repo-1');
     routines = await repo.getRoutinesForDate('2026-08-15');
     expect(routines.first.timeWindow, TimeWindow.afternoon);
+
+    // Delete item
+    await repo.deleteRoutine('item-repo-1');
+    routines = await repo.getRoutinesForDate('2026-08-15');
+    expect(routines.isEmpty, true);
   });
 }

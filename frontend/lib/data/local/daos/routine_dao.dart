@@ -86,4 +86,8 @@ class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
           ),
         );
   }
+
+  Future<int> deleteRoutine(String id) {
+    return (delete(routineItemsTable)..where((tbl) => tbl.id.equals(id))).go();
+  }
 }

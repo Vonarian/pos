@@ -27,4 +27,5 @@ const (
 	MetricWeight         MetricType = "WEIGHT"
 	MetricBodyFat        MetricType = "BODY_FAT"
 	MetricWorkoutSession MetricType = "WORKOUT_SESSION"
+	MetricWaterIntake    MetricType = "WATER_INTAKE"
 )

@@ -73,6 +73,10 @@ func (s *RoutineService) SkipItem(ctx context.Context, id string) error {
 	return s.repo.UpdateStatus(ctx, id, domain.StatusSkipped, nil)
 }
 
+func (s *RoutineService) RevertItem(ctx context.Context, id string) error {
+	return s.repo.UpdateStatus(ctx, id, domain.StatusPending, nil)
+}
+
 func (s *RoutineService) DeferItem(ctx context.Context, id string) error {
 	item, err := s.repo.GetByID(ctx, id)
 	if err != nil {

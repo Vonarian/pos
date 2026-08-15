@@ -51,6 +51,22 @@ class MetricDao extends DatabaseAccessor<AppDatabase> with _$MetricDaoMixin {
         .watch();
   }
 
+  Future<List<HealthMetricsTableData>> getMetricsForRange(
+    String metric,
+    DateTime from,
+    DateTime to,
+  ) {
+    return (select(healthMetricsTable)
+          ..where(
+            (tbl) =>
+                tbl.metric.equals(metric) &
+                tbl.startTime.isBiggerOrEqualValue(from) &
+                tbl.endTime.isSmallerOrEqualValue(to),
+          )
+          ..orderBy([(t) => OrderingTerm(expression: t.startTime)]))
+        .get();
+  }
+
   Future<Map<String, double>> getDailySummary(DateTime date) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));

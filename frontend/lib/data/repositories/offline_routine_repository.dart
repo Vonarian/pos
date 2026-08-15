@@ -51,6 +51,23 @@ class OfflineRoutineRepository {
     }
   }
 
+  Future<void> revertRoutine(String id) async {
+    await db.routineDao.updateStatus(id, 'PENDING', null);
+
+    if (apiClient != null) {
+      try {
+        await apiClient!.revertRoutine(id);
+        await db.routineDao.markAsSynced([id]);
+      } catch (_) {
+        // Will sync later
+      }
+    }
+  }
+
+  Future<void> deleteRoutine(String id) async {
+    await db.routineDao.deleteRoutine(id);
+  }
+
   Future<void> deferRoutine(String id) async {
     final item = await db.routineDao.getRoutineById(id);
     if (item == null) return;

@@ -1,4 +1,6 @@
 import 'package:drift/drift.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../local/database.dart';
 import '../remote/api_client.dart';
@@ -39,6 +41,56 @@ class OfflineMetricRepository {
     }
   }
 
+  Future<void> logManualMetric({
+    required MetricType metric,
+    required double value,
+    required String unit,
+    DateTime? timestamp,
+  }) async {
+    final now = timestamp ?? DateTime.now();
+    final dateStr = DateFormat('yyyy-MM-dd').format(now);
+    final point = HealthDataPoint(
+      id: 'manual-${metric.value.toLowerCase()}-$dateStr-${const Uuid().v4().substring(0, 8)}',
+      source: 'manual',
+      metric: metric,
+      value: value,
+      unit: unit,
+      startTime: now,
+      endTime: now,
+      syncedAt: now,
+    );
+
+    await ingestMetrics([point]);
+  }
+
+  Future<List<HealthDataPoint>> getMetricSeries(
+    MetricType metric,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final localData = await db.metricDao.getMetricsForRange(
+      metric.value,
+      from,
+      to,
+    );
+
+    return localData
+        .map(
+          (e) => HealthDataPoint(
+            id: e.id,
+            source: e.source,
+            metric: MetricType.fromString(e.metric),
+            value: e.value,
+            unit: e.unit,
+            startTime: e.startTime,
+            endTime: e.endTime,
+            externalId: e.externalId,
+            syncedAt: e.syncedAt,
+          ),
+        )
+        .toList();
+  }
+
   Future<Map<String, double>> getDailySummary(DateTime date) async {
     // Local SQLite aggregation first
     final localSummary = await db.metricDao.getDailySummary(date);
@@ -49,8 +101,7 @@ class OfflineMetricRepository {
     // Fallback to backend summary (Desktop fallback)
     if (apiClient != null) {
       try {
-        final dateStr =
-            "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        final dateStr = DateFormat('yyyy-MM-dd').format(date);
         final remote = await apiClient!.getDailySummary(dateStr);
         return {
           'STEPS': (remote['steps'] as num?)?.toDouble() ?? 0.0,

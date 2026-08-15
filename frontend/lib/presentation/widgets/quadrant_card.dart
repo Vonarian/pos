@@ -1,4 +1,4 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 
 import '../../domain/models/routine_item.dart';
 import 'routine_item_tile.dart';
@@ -10,8 +10,10 @@ class QuadrantCard extends StatelessWidget {
   final bool isActive;
   final List<RoutineItem> items;
   final Function(String id) onComplete;
+  final Function(String id) onRevert;
   final Function(String id) onSkip;
   final Function(String id) onDefer;
+  final Function(String id)? onDelete;
 
   const QuadrantCard({
     super.key,
@@ -21,8 +23,10 @@ class QuadrantCard extends StatelessWidget {
     required this.isActive,
     required this.items,
     required this.onComplete,
+    required this.onRevert,
     required this.onSkip,
     required this.onDefer,
+    this.onDelete,
   });
 
   @override
@@ -77,7 +81,7 @@ class QuadrantCard extends StatelessWidget {
                     size: 20,
                     color: isActive
                         ? Theme.of(context).colorScheme.primary
-                        : Colors.grey.shade600,
+                        : Colors.grey.shade400,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -125,7 +129,7 @@ class QuadrantCard extends StatelessWidget {
                         timeRange,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: Colors.grey.shade400,
                         ),
                       ),
                     ],
@@ -139,7 +143,7 @@ class QuadrantCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: completedCount == totalCount && totalCount > 0
                         ? Colors.teal
-                        : Colors.grey.shade600,
+                        : Colors.grey.shade400,
                   ),
                 ),
               ],
@@ -166,8 +170,10 @@ class QuadrantCard extends StatelessWidget {
                 (item) => RoutineItemTile(
                   item: item,
                   onComplete: () => onComplete(item.id),
+                  onRevert: () => onRevert(item.id),
                   onSkip: () => onSkip(item.id),
                   onDefer: () => onDefer(item.id),
+                  onDelete: onDelete != null ? () => onDelete!(item.id) : null,
                 ),
               ),
             ] else ...[

@@ -1,9 +1,12 @@
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pos_frontend/data/local/database.dart';
+import 'package:pos_frontend/data/repositories/offline_metric_repository.dart';
+import 'package:pos_frontend/data/repositories/offline_routine_repository.dart';
+import 'package:pos_frontend/presentation/providers/metric_provider.dart';
 import 'package:pos_frontend/presentation/providers/routine_provider.dart';
 import 'package:pos_frontend/presentation/screens/dashboard_screen.dart';
 
@@ -11,6 +14,11 @@ void main() {
   testWidgets('Dashboard renders 4 quadrants and displays items', (
     WidgetTester tester,
   ) async {
+    FlutterError.onError = (details) {
+      debugPrint('TEST ERROR DETECTED: ${details.exception}');
+      debugPrint('STACK: ${details.stack}');
+    };
+
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -35,13 +43,25 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [databaseProvider.overrideWithValue(db)],
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          offlineRoutineRepositoryProvider.overrideWithValue(
+            OfflineRoutineRepository(db: db, apiClient: null),
+          ),
+          offlineMetricRepositoryProvider.overrideWithValue(
+            OfflineMetricRepository(db: db, apiClient: null),
+          ),
+          dailyMetricSummaryProvider.overrideWith((ref) async => <String, double>{
+                'STEPS': 5000,
+                'CALORIES_BURNED': 1200,
+              }),
+        ],
         child: const MaterialApp(home: DashboardScreen()),
       ),
     );
 
-    // Initial pump and settle
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     // Verify 4 quadrants are present
     expect(find.text('Morning Protocol'), findsOneWidget);

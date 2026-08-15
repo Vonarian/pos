@@ -4,7 +4,8 @@ enum MetricType {
   sleepDuration('SLEEP_DURATION'),
   weight('WEIGHT'),
   bodyFat('BODY_FAT'),
-  workoutSession('WORKOUT_SESSION');
+  workoutSession('WORKOUT_SESSION'),
+  waterIntake('WATER_INTAKE');
 
   final String value;
   const MetricType(this.value);

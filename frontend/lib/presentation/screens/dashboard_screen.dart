@@ -1,17 +1,38 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/native/health_connect_channel.dart';
+import '../../data/repositories/offline_routine_repository.dart';
 import '../../domain/models/routine_item.dart';
 import '../providers/routine_provider.dart';
 import '../providers/metric_provider.dart';
 import '../widgets/quadrant_card.dart';
 import '../widgets/metric_summary_chart.dart';
+import 'home_shell.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
+
+  void _completeWithUndo(
+    BuildContext context,
+    OfflineRoutineRepository repo,
+    String id,
+  ) {
+    repo.completeRoutine(id);
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Habit marked as completed'),
+        action: SnackBarAction(
+          label: 'UNDO',
+          onPressed: () => repo.revertRoutine(id),
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -165,9 +186,11 @@ class DashboardScreen extends ConsumerWidget {
               isActive:
                   isToday && quadrantState.activeWindow == TimeWindow.morning,
               items: quadrantState.morning,
-              onComplete: (id) => repo.completeRoutine(id),
+              onComplete: (id) => _completeWithUndo(context, repo, id),
+              onRevert: (id) => repo.revertRoutine(id),
               onSkip: (id) => repo.skipRoutine(id),
               onDefer: (id) => repo.deferRoutine(id),
+              onDelete: (id) => repo.deleteRoutine(id),
             ),
 
             QuadrantCard(
@@ -177,9 +200,11 @@ class DashboardScreen extends ConsumerWidget {
               isActive:
                   isToday && quadrantState.activeWindow == TimeWindow.afternoon,
               items: quadrantState.afternoon,
-              onComplete: (id) => repo.completeRoutine(id),
+              onComplete: (id) => _completeWithUndo(context, repo, id),
+              onRevert: (id) => repo.revertRoutine(id),
               onSkip: (id) => repo.skipRoutine(id),
               onDefer: (id) => repo.deferRoutine(id),
+              onDelete: (id) => repo.deleteRoutine(id),
             ),
 
             QuadrantCard(
@@ -189,9 +214,11 @@ class DashboardScreen extends ConsumerWidget {
               isActive:
                   isToday && quadrantState.activeWindow == TimeWindow.evening,
               items: quadrantState.evening,
-              onComplete: (id) => repo.completeRoutine(id),
+              onComplete: (id) => _completeWithUndo(context, repo, id),
+              onRevert: (id) => repo.revertRoutine(id),
               onSkip: (id) => repo.skipRoutine(id),
               onDefer: (id) => repo.deferRoutine(id),
+              onDelete: (id) => repo.deleteRoutine(id),
             ),
 
             QuadrantCard(
@@ -201,9 +228,11 @@ class DashboardScreen extends ConsumerWidget {
               isActive:
                   isToday && quadrantState.activeWindow == TimeWindow.night,
               items: quadrantState.night,
-              onComplete: (id) => repo.completeRoutine(id),
+              onComplete: (id) => _completeWithUndo(context, repo, id),
+              onRevert: (id) => repo.revertRoutine(id),
               onSkip: (id) => repo.skipRoutine(id),
               onDefer: (id) => repo.deferRoutine(id),
+              onDelete: (id) => repo.deleteRoutine(id),
             ),
 
             const SizedBox(height: 12),
@@ -222,6 +251,10 @@ class DashboardScreen extends ConsumerWidget {
                 },
                 onRefresh: () {
                   ref.invalidate(dailyMetricSummaryProvider);
+                },
+                onMetricTap: (metric) {
+                  ref.read(selectedMetricTypeProvider.notifier).select(metric);
+                  ref.read(currentTabProvider.notifier).select(1);
                 },
               ),
               loading: () => const Center(child: CircularProgressIndicator()),
