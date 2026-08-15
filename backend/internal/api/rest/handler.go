@@ -15,6 +15,7 @@ type Server struct {
 	metricSvc  *service.MetricService
 	cronSvc    *service.CronService
 	wsHub      *ws.Hub
+	version    string
 }
 
 func NewServer(
@@ -28,6 +29,13 @@ func NewServer(
 		metricSvc:  metricSvc,
 		cronSvc:    cronSvc,
 		wsHub:      wsHub,
+		version:    "1.0.0",
+	}
+}
+
+func (s *Server) SetVersion(v string) {
+	if v != "" {
+		s.version = v
 	}
 }
 
@@ -64,7 +72,7 @@ func (s *Server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]any{
 		"status":    "healthy",
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
-		"version":   "1.0.0",
+		"version":   s.version,
 	})
 }
 

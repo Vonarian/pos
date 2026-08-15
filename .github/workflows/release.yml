@@ -1,27 +1,118 @@
-name: Release
+name: Release Pipeline
 
 on:
   push:
+    branches:
+      - main
+      - dev
     tags:
       - 'v*'
   workflow_dispatch:
     inputs:
-      tag_name:
-        description: 'Tag name for the release (e.g. v1.0.0)'
+      channel:
+        description: 'Release Channel'
         required: true
-        default: 'v1.0.0'
-      prerelease:
-        description: 'Mark as pre-release'
+        default: 'stable'
+        type: choice
+        options:
+          - stable
+          - dev
+          - nightly
+      version:
+        description: 'Explicit Version Tag for Stable (e.g. v1.0.0, or leave empty to use VERSION file)'
         required: false
-        default: false
-        type: boolean
+        default: ''
 
 permissions:
   contents: write
 
 jobs:
+  prepare-version:
+    name: Prepare Release Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.calc.outputs.channel }}
+      version_tag: ${{ steps.calc.outputs.version_tag }}
+      is_prerelease: ${{ steps.calc.outputs.is_prerelease }}
+      release_title: ${{ steps.calc.outputs.release_title }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Calculate Version & Channel
+        id: calc
+        run: |
+          BASE_VERSION=$(cat VERSION | tr -d '[:space:]')
+          if [ -z "$BASE_VERSION" ]; then
+            BASE_VERSION="0.1.0"
+          fi
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          DATE_STAMP=$(date -u +'%Y%m%d')
+
+          EVENT="${{ github.event_name }}"
+          REF="${{ github.ref }}"
+          MANUAL_CHANNEL="${{ inputs.channel }}"
+          MANUAL_VERSION="${{ inputs.version }}"
+
+          CHANNEL="stable"
+          IS_PRERELEASE="false"
+          VERSION_TAG=""
+          RELEASE_TITLE=""
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            CHANNEL="$MANUAL_CHANNEL"
+            if [ "$CHANNEL" = "stable" ]; then
+              IS_PRERELEASE="false"
+              if [ -n "$MANUAL_VERSION" ]; then
+                VERSION_TAG="$MANUAL_VERSION"
+              else
+                VERSION_TAG="v${BASE_VERSION}"
+              fi
+              RELEASE_TITLE="Stable Release ${VERSION_TAG}"
+            elif [ "$CHANNEL" = "dev" ]; then
+              IS_PRERELEASE="true"
+              VERSION_TAG="v${BASE_VERSION}-dev.${SHORT_SHA}"
+              RELEASE_TITLE="Development Build (${VERSION_TAG})"
+            elif [ "$CHANNEL" = "nightly" ]; then
+              IS_PRERELEASE="true"
+              VERSION_TAG="v${BASE_VERSION}-nightly.${DATE_STAMP}.${SHORT_SHA}"
+              RELEASE_TITLE="Nightly Build (${VERSION_TAG})"
+            fi
+          elif [[ "$REF" == refs/tags/v* ]]; then
+            CHANNEL="stable"
+            IS_PRERELEASE="false"
+            VERSION_TAG="${REF#refs/tags/}"
+            RELEASE_TITLE="Stable Release ${VERSION_TAG}"
+          elif [ "$REF" = "refs/heads/dev" ]; then
+            CHANNEL="dev"
+            IS_PRERELEASE="true"
+            VERSION_TAG="v${BASE_VERSION}-dev.${SHORT_SHA}"
+            RELEASE_TITLE="Development Build (${VERSION_TAG})"
+          elif [ "$REF" = "refs/heads/main" ]; then
+            CHANNEL="nightly"
+            IS_PRERELEASE="true"
+            VERSION_TAG="v${BASE_VERSION}-nightly.${DATE_STAMP}.${SHORT_SHA}"
+            RELEASE_TITLE="Nightly Build (${VERSION_TAG})"
+          else
+            CHANNEL="dev"
+            IS_PRERELEASE="true"
+            VERSION_TAG="v${BASE_VERSION}-dev.${SHORT_SHA}"
+            RELEASE_TITLE="Development Build (${VERSION_TAG})"
+          fi
+
+          echo "Channel: ${CHANNEL}"
+          echo "Version Tag: ${VERSION_TAG}"
+          echo "Is Pre-Release: ${IS_PRERELEASE}"
+          echo "Release Title: ${RELEASE_TITLE}"
+
+          echo "channel=${CHANNEL}" >> $GITHUB_OUTPUT
+          echo "version_tag=${VERSION_TAG}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+          echo "release_title=${RELEASE_TITLE}" >> $GITHUB_OUTPUT
+
   build-backend:
     name: Build Backend (${{ matrix.target }})
+    needs: [prepare-version]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -63,27 +154,29 @@ jobs:
           go-version: '1.26.x'
           cache-dependency-path: backend/go.sum
 
-      - name: Build Binary
+      - name: Build Go Server Binary
         working-directory: backend
         env:
           CGO_ENABLED: '0'
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          VERSION="${{ github.ref_name }}"
-          if [ -z "$VERSION" ] || [[ "$VERSION" != v* ]]; then
-            VERSION="${{ inputs.tag_name }}"
-          fi
-          mkdir -p bin
-          go build -ldflags="-s -w" -o bin/pos-server${{ matrix.ext }} ./cmd/server
+          VERSION="${{ needs.prepare-version.outputs.version_tag }}"
+          COMMIT="${{ github.sha }}"
+          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-      - name: Package Archive
-        id: package
+          mkdir -p bin
+          go build -ldflags="-s -w -X main.Version=${VERSION} -X main.Commit=${COMMIT} -X main.BuildDate=${BUILD_DATE}" \
+            -o bin/pos-server${{ matrix.ext }} ./cmd/server
+
+      - name: Package Backend Archive
         run: |
           mkdir -p dist
-          PKG_NAME="pos-server-${{ matrix.target }}"
+          VERSION="${{ needs.prepare-version.outputs.version_tag }}"
+          PKG_NAME="pos-server-${VERSION}-${{ matrix.target }}"
           STAGE_DIR="stage_${PKG_NAME}"
           mkdir -p "${STAGE_DIR}"
+
           cp backend/bin/pos-server${{ matrix.ext }} "${STAGE_DIR}/"
           cp -r backend/migrations "${STAGE_DIR}/" || true
           cp backend/README.md "${STAGE_DIR}/" || true
@@ -103,6 +196,7 @@ jobs:
 
   build-android:
     name: Build Android APKs & AppBundle
+    needs: [prepare-version]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -130,27 +224,34 @@ jobs:
 
       - name: Build Split-Per-ABI APKs
         working-directory: frontend
-        run: flutter build apk --release --split-per-abi
+        run: |
+          VERSION="${{ needs.prepare-version.outputs.version_tag }}"
+          flutter build apk --release --split-per-abi --build-name="${VERSION#v}" --build-number="${{ github.run_number }}"
 
       - name: Build Universal APK
         working-directory: frontend
-        run: flutter build apk --release
+        run: |
+          VERSION="${{ needs.prepare-version.outputs.version_tag }}"
+          flutter build apk --release --build-name="${VERSION#v}" --build-number="${{ github.run_number }}"
 
       - name: Build Android App Bundle (.aab)
         working-directory: frontend
-        run: flutter build appbundle --release
+        run: |
+          VERSION="${{ needs.prepare-version.outputs.version_tag }}"
+          flutter build appbundle --release --build-name="${VERSION#v}" --build-number="${{ github.run_number }}"
 
       - name: Stage Android Artifacts
         run: |
           mkdir -p dist-android
+          VERSION="${{ needs.prepare-version.outputs.version_tag }}"
           APK_DIR="frontend/build/app/outputs/flutter-apk"
           AAB_DIR="frontend/build/app/outputs/bundle/release"
 
-          cp "${APK_DIR}/app-arm64-v8a-release.apk" dist-android/pos-android-arm64-v8a.apk || true
-          cp "${APK_DIR}/app-armeabi-v7a-release.apk" dist-android/pos-android-armeabi-v7a.apk || true
-          cp "${APK_DIR}/app-x86_64-release.apk" dist-android/pos-android-x86_64.apk || true
-          cp "${APK_DIR}/app-release.apk" dist-android/pos-android-universal.apk
-          cp "${AAB_DIR}/app-release.aab" dist-android/pos-android.aab || true
+          cp "${APK_DIR}/app-arm64-v8a-release.apk" "dist-android/pos-android-${VERSION}-arm64-v8a.apk" || true
+          cp "${APK_DIR}/app-armeabi-v7a-release.apk" "dist-android/pos-android-${VERSION}-armeabi-v7a.apk" || true
+          cp "${APK_DIR}/app-x86_64-release.apk" "dist-android/pos-android-${VERSION}-x86_64.apk" || true
+          cp "${APK_DIR}/app-release.apk" "dist-android/pos-android-${VERSION}-universal.apk"
+          cp "${AAB_DIR}/app-release.aab" "dist-android/pos-android-${VERSION}.aab" || true
 
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
@@ -160,8 +261,8 @@ jobs:
           if-no-files-found: error
 
   publish-release:
-    name: Publish GitHub Release
-    needs: [build-backend, build-android]
+    name: Publish Release
+    needs: [prepare-version, build-backend, build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -180,24 +281,12 @@ jobs:
           sha256sum * > SHA256SUMS.txt
           ls -la
 
-      - name: Determine Tag Name
-        id: vars
-        run: |
-          TAG="${{ github.ref_name }}"
-          if [ -z "$TAG" ] || [[ "$TAG" != v* ]]; then
-            TAG="${{ inputs.tag_name }}"
-          fi
-          if [ -z "$TAG" ]; then
-            TAG="v1.0.0"
-          fi
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.vars.outputs.tag }}
-          name: "Release ${{ steps.vars.outputs.tag }}"
-          prerelease: ${{ inputs.prerelease || false }}
+          tag_name: ${{ needs.prepare-version.outputs.version_tag }}
+          name: ${{ needs.prepare-version.outputs.release_title }}
+          prerelease: ${{ needs.prepare-version.outputs.is_prerelease == 'true' }}
           generate_release_notes: true
           files: release-assets/*
         env:

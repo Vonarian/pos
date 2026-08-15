@@ -18,6 +18,12 @@ import (
 	"github.com/pos/backend/internal/service"
 )
 
+var (
+	Version   = "1.0.0-dev"
+	Commit    = "none"
+	BuildDate = "unknown"
+)
+
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
@@ -25,7 +31,12 @@ func main() {
 	slog.SetDefault(logger)
 
 	cfg := config.Load()
-	slog.Info("Starting Personal Operating System (POS) daemon", "port", cfg.Port)
+	slog.Info("Starting Personal Operating System (POS) daemon",
+		"version", Version,
+		"commit", Commit,
+		"build_date", BuildDate,
+		"port", cfg.Port,
+	)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -72,6 +83,7 @@ func main() {
 	}
 
 	server := rest.NewServer(routineSvc, metricSvc, cronSvc, wsHub)
+	server.SetVersion(Version)
 	handler := middleware.EnableCORS(server.Routes())
 
 	httpServer := &http.Server{
