@@ -3,12 +3,12 @@ name: Frontend CI
 on:
   push:
     paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
   pull_request:
     paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
 
 jobs:
   test:
@@ -21,18 +21,22 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
           cache: true
 
       - name: Install dependencies
         working-directory: frontend
         run: flutter pub get
+
+      - name: Run build_runner
+        working-directory: frontend
+        run: flutter pub run build_runner build
 
       - name: Analyze code
         working-directory: frontend
