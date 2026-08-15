@@ -10,6 +10,10 @@ on:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'
 
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -36,6 +40,10 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: flutter pub get
+
+      - name: Generate Drift SQLite Bindings
+        working-directory: frontend
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Analyze code
         working-directory: frontend
