@@ -31,6 +31,24 @@ class QuadrantCard extends StatelessWidget {
     this.onDelete,
   });
 
+  Widget _buildActiveDot(ThemeData theme) {
+    return Container(
+      width: 7,
+      height: 7,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.6),
+            blurRadius: 6,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeader(BuildContext context, int completed, int total) {
     final theme = Theme.of(context);
     return Row(
@@ -70,24 +88,7 @@ class QuadrantCard extends StatelessWidget {
                   ),
                   if (isActive) ...[
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'ACTIVE',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    _buildActiveDot(theme),
                   ],
                 ],
               ),
@@ -133,6 +134,16 @@ class QuadrantCard extends StatelessWidget {
                   : theme.dividerColor.withValues(alpha: 0.2),
           width: isActive ? 2.0 : 1.0,
         ),
+        boxShadow:
+            isActive
+                ? [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+                : null,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
