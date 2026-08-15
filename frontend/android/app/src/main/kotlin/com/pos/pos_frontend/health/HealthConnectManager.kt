@@ -8,6 +8,7 @@ import androidx.health.connect.client.request.ChangesTokenRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.response.ChangesResponse
 import androidx.health.connect.client.time.TimeRangeFilter
+import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.reflect.KClass
@@ -79,5 +80,38 @@ class HealthConnectManager(private val context: Context) {
             )
         )
         return response.records.sumOf { it.energy.inKilocalories }
+    }
+
+    suspend fun readTodaySleep(): Double {
+        val client = healthConnectClient ?: return 0.0
+        val startTime = Instant.now().minus(24, ChronoUnit.HOURS)
+        val endTime = Instant.now()
+
+        val response = client.readRecords(
+            ReadRecordsRequest(
+                recordType = SleepSessionRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+            )
+        )
+        var totalMinutes = 0.0
+        for (record in response.records) {
+            val duration = Duration.between(record.startTime, record.endTime)
+            totalMinutes += duration.toMinutes().toDouble()
+        }
+        return totalMinutes
+    }
+
+    suspend fun readTodayWeight(): Double {
+        val client = healthConnectClient ?: return 0.0
+        val startTime = Instant.now().minus(30, ChronoUnit.DAYS)
+        val endTime = Instant.now()
+
+        val response = client.readRecords(
+            ReadRecordsRequest(
+                recordType = WeightRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+            )
+        )
+        return response.records.lastOrNull()?.weight?.inKilograms ?: 0.0
     }
 }

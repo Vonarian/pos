@@ -1,9 +1,15 @@
 allprojects {
     repositories {
+        all {
+            if (this is MavenArtifactRepository) {
+                isAllowInsecureProtocol = true
+            }
+        }
         google()
         mavenCentral()
         maven {
             url = uri("https://download.flutter.io")
+            isAllowInsecureProtocol = true
         }
     }
 }

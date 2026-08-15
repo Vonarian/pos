@@ -27,6 +27,16 @@ class HealthConnectChannel {
     }
   }
 
+  static Future<bool> requestPermissions() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final granted = await _channel.invokeMethod<bool>('requestPermissions');
+      return granted ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<List<HealthDataPoint>> getTodayAggregates() async {
     if (!Platform.isAndroid) return [];
     try {
@@ -67,6 +77,39 @@ class HealthConnectChannel {
             syncedAt: now,
           ),
         );
+      }
+
+      if (result.containsKey('sleepMinutes')) {
+        list.add(
+          HealthDataPoint(
+            id: 'hc-sleep-${now.millisecondsSinceEpoch}',
+            source: 'health_connect',
+            metric: MetricType.sleepDuration,
+            value: (result['sleepMinutes'] as num).toDouble(),
+            unit: 'minutes',
+            startTime: now.subtract(const Duration(hours: 24)),
+            endTime: now,
+            syncedAt: now,
+          ),
+        );
+      }
+
+      if (result.containsKey('weightKg')) {
+        final weight = (result['weightKg'] as num).toDouble();
+        if (weight > 0) {
+          list.add(
+            HealthDataPoint(
+              id: 'hc-weight-${now.millisecondsSinceEpoch}',
+              source: 'health_connect',
+              metric: MetricType.weight,
+              value: weight,
+              unit: 'kg',
+              startTime: now,
+              endTime: now,
+              syncedAt: now,
+            ),
+          );
+        }
       }
 
       return list;

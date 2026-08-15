@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../data/native/health_connect_channel.dart';
 import '../../domain/models/routine_item.dart';
 import '../providers/routine_provider.dart';
 import '../providers/metric_provider.dart';
@@ -209,7 +210,20 @@ class DashboardScreen extends ConsumerWidget {
 
             // Metrics Telemetry
             metricsAsync.when(
-              data: (metrics) => MetricSummaryChart(metrics: metrics),
+              data: (metrics) => MetricSummaryChart(
+                metrics: metrics,
+                isConnected: ref.watch(healthConnectStatusProvider).value ?? false,
+                onConnect: () async {
+                  final granted = await HealthConnectChannel.requestPermissions();
+                  if (granted) {
+                    ref.invalidate(healthConnectStatusProvider);
+                    ref.invalidate(dailyMetricSummaryProvider);
+                  }
+                },
+                onRefresh: () {
+                  ref.invalidate(dailyMetricSummaryProvider);
+                },
+              ),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => const SizedBox.shrink(),
             ),

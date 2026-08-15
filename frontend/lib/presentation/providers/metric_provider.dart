@@ -12,15 +12,23 @@ final offlineMetricRepositoryProvider = Provider<OfflineMetricRepository>((
   return OfflineMetricRepository(db: db, apiClient: client);
 });
 
+final healthConnectStatusProvider =
+    FutureProvider.autoDispose<bool>((ref) async {
+      final isAvail = await HealthConnectChannel.isAvailable();
+      if (!isAvail) return false;
+      return HealthConnectChannel.hasPermissions();
+    });
+
 final dailyMetricSummaryProvider =
     FutureProvider.autoDispose<Map<String, double>>((ref) async {
       final repo = ref.watch(offlineMetricRepositoryProvider);
       final dateStr = ref.watch(selectedDateProvider);
       final date = DateTime.tryParse(dateStr) ?? DateTime.now();
 
-      // On Android, attempt to read fresh aggregates from Health Connect first
+      // On Android, attempt to read fresh aggregates from Health Connect first if permissions granted
       try {
-        if (await HealthConnectChannel.isAvailable()) {
+        if (await HealthConnectChannel.isAvailable() &&
+            await HealthConnectChannel.hasPermissions()) {
           final points = await HealthConnectChannel.getTodayAggregates();
           if (points.isNotEmpty) {
             await repo.ingestMetrics(points);

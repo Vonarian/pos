@@ -11,6 +11,11 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
+        all {
+            if (this is MavenArtifactRepository) {
+                isAllowInsecureProtocol = true
+            }
+        }
         google()
         mavenCentral()
         gradlePluginPortal()

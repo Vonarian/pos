@@ -1,9 +1,18 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 
 class MetricSummaryChart extends StatelessWidget {
   final Map<String, double> metrics;
+  final bool isConnected;
+  final VoidCallback? onConnect;
+  final VoidCallback? onRefresh;
 
-  const MetricSummaryChart({super.key, required this.metrics});
+  const MetricSummaryChart({
+    super.key,
+    required this.metrics,
+    this.isConnected = true,
+    this.onConnect,
+    this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +35,91 @@ class MetricSummaryChart extends StatelessWidget {
             ),
             Row(
               children: [
-                Icon(Icons.sync_rounded, size: 14, color: Colors.grey.shade500),
+                if (onRefresh != null && isConnected) ...[
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: 'Refresh Health Connect',
+                    onPressed: onRefresh,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Icon(
+                  isConnected ? Icons.check_circle_outline_rounded : Icons.sync_problem_rounded,
+                  size: 14,
+                  color: isConnected ? Colors.teal : Colors.amber.shade700,
+                ),
                 const SizedBox(width: 4),
                 Text(
-                  'Health Connect',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  isConnected ? 'Health Connect' : 'Not Connected',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isConnected ? Colors.grey.shade400 : Colors.amber.shade700,
+                  ),
                 ),
               ],
             ),
           ],
         ),
         const SizedBox(height: 12),
+
+        if (!isConnected && onConnect != null) ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.health_and_safety_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Connect Health Connect',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Sync steps, calories, sleep & weight passively',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.tonal(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  ),
+                  onPressed: onConnect,
+                  child: const Text('Grant Access', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
         Row(
           children: [
             Expanded(
@@ -132,7 +215,7 @@ class _MetricCard extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: Colors.grey.shade400,
                   fontWeight: FontWeight.w500,
                 ),
               ),
