@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../domain/models/routine_item.dart';
+import 'routine_category_chip.dart';
+import 'routine_item_menu.dart';
 
-class RoutineItemTile extends StatelessWidget {
+class RoutineItemTile extends StatefulWidget {
   final RoutineItem item;
   final VoidCallback onComplete;
   final VoidCallback onRevert;
@@ -20,239 +23,151 @@ class RoutineItemTile extends StatelessWidget {
     this.onDelete,
   });
 
-  Color _getCategoryColor(String category) {
-    switch (category.toUpperCase()) {
-      case 'MEDS':
-        return Colors.teal;
-      case 'WORKOUT':
-        return Colors.deepOrange;
-      case 'NUTRITION':
-        return Colors.green;
-      default:
-        return Colors.indigo;
+  @override
+  State<RoutineItemTile> createState() => _RoutineItemTileState();
+}
+
+class _RoutineItemTileState extends State<RoutineItemTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 1.25)
+            .chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 50.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.25, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInBack)),
+        weight: 50.0,
+      ),
+    ]).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleToggle() {
+    HapticFeedback.lightImpact();
+    _controller.forward(from: 0.0);
+    if (widget.item.status == ItemStatus.completed) {
+      widget.onRevert();
+    } else {
+      widget.onComplete();
     }
+  }
+
+  Widget _buildCheckmark(bool isDone, bool isSkipped) {
+    final iconData = isDone
+        ? Icons.check_circle_rounded
+        : isSkipped
+            ? Icons.remove_circle_outline_rounded
+            : Icons.radio_button_unchecked_rounded;
+    final iconColor = isDone ? Colors.teal : Colors.grey.shade400;
+
+    return ScaleTransition(
+      key: const Key('routine_tile_scale_transition'),
+      scale: _scaleAnimation,
+      child: IconButton(
+        icon: Icon(iconData, color: iconColor, size: 26),
+        onPressed: _handleToggle,
+        tooltip: isDone ? 'Revert to Pending' : 'Mark as Done',
+      ),
+    );
+  }
+
+  Widget _buildContent(bool isDone, bool isSkipped, BuildContext context) {
+    final item = widget.item;
+    final isInactive = isDone || isSkipped;
+    final defaultColor = Theme.of(context).textTheme.bodyMedium?.color;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RoutineCategoryChip(
+          category: item.category,
+          metadata: item.metadata,
+        ),
+        const SizedBox(height: 4),
+        AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 200),
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            decoration: isInactive ? TextDecoration.lineThrough : null,
+            color: isInactive ? Colors.grey : defaultColor,
+          ),
+          child: Text(item.title),
+        ),
+        if (item.metadata['dosage'] != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            'Dosage: ${item.metadata['dosage']}',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDone = item.status == ItemStatus.completed;
-    final isSkipped = item.status == ItemStatus.skipped;
-    final isMissed = item.status == ItemStatus.missed;
+    final isDone = widget.item.status == ItemStatus.completed;
+    final isSkipped = widget.item.status == ItemStatus.skipped;
+    final isMissed = widget.item.status == ItemStatus.missed;
 
     Color cardBg = Theme.of(context).cardColor;
     if (isDone) cardBg = Colors.teal.withValues(alpha: 0.08);
     if (isSkipped) cardBg = Colors.grey.withValues(alpha: 0.06);
     if (isMissed) cardBg = Colors.red.withValues(alpha: 0.06);
 
-    return Card(
-      elevation: 0,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
+        border: Border.all(
           color: isDone
               ? Colors.teal.withValues(alpha: 0.3)
               : Theme.of(context).dividerColor.withValues(alpha: 0.2),
         ),
       ),
-      color: cardBg,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          if (isDone) {
-            onRevert();
-          } else {
-            onComplete();
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              // Done Checkbox (Clicking toggles complete <-> revert)
-              IconButton(
-                icon: Icon(
-                  isDone
-                      ? Icons.check_circle_rounded
-                      : isSkipped
-                          ? Icons.remove_circle_outline_rounded
-                          : Icons.radio_button_unchecked_rounded,
-                  color: isDone
-                      ? Colors.teal
-                      : isSkipped
-                          ? Colors.grey.shade400
-                          : Colors.grey.shade400,
-                  size: 26,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: _handleToggle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                _buildCheckmark(isDone, isSkipped),
+                const SizedBox(width: 8),
+                Expanded(child: _buildContent(isDone, isSkipped, context)),
+                RoutineItemMenu(
+                  item: widget.item,
+                  onComplete: widget.onComplete,
+                  onRevert: widget.onRevert,
+                  onSkip: widget.onSkip,
+                  onDefer: widget.onDefer,
+                  onDelete: widget.onDelete,
                 ),
-                onPressed: isDone ? onRevert : onComplete,
-                tooltip: isDone ? 'Revert to Pending' : 'Mark as Done',
-              ),
-              const SizedBox(width: 8),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getCategoryColor(item.category)
-                                .withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            item.category.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: _getCategoryColor(item.category),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        if (item.metadata['nfc_tag'] != null)
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.nfc_rounded,
-                                size: 12,
-                                color: Colors.blueGrey.shade400,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                'NFC',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.blueGrey.shade400,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        decoration: isDone
-                            ? TextDecoration.lineThrough
-                            : isSkipped
-                                ? TextDecoration.lineThrough
-                                : null,
-                        color: isDone || isSkipped ? Colors.grey : null,
-                      ),
-                    ),
-                    if (item.metadata['dosage'] != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        "Dosage: ${item.metadata['dosage']}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              // Action Options Menu
-              PopupMenuButton<String>(
-                icon: const Icon(
-                  Icons.more_vert_rounded,
-                  size: 20,
-                  color: Colors.grey,
-                ),
-                onSelected: (value) {
-                  switch (value) {
-                    case 'revert':
-                      onRevert();
-                      break;
-                    case 'complete':
-                      onComplete();
-                      break;
-                    case 'defer':
-                      onDefer();
-                      break;
-                    case 'skip':
-                      onSkip();
-                      break;
-                    case 'delete':
-                      if (onDelete != null) onDelete!();
-                      break;
-                  }
-                },
-                itemBuilder: (context) => [
-                  if (isDone || isSkipped || isMissed)
-                    const PopupMenuItem(
-                      value: 'revert',
-                      child: Row(
-                        children: [
-                          Icon(Icons.undo_rounded, size: 18, color: Colors.amber),
-                          SizedBox(width: 8),
-                          Text('Revert to Pending'),
-                        ],
-                      ),
-                    ),
-                  if (!isDone)
-                    const PopupMenuItem(
-                      value: 'complete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.check_circle_outline_rounded, size: 18, color: Colors.teal),
-                          SizedBox(width: 8),
-                          Text('Mark as Done'),
-                        ],
-                      ),
-                    ),
-                  if (!isDone)
-                    const PopupMenuItem(
-                      value: 'defer',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.schedule_send_rounded,
-                            size: 18,
-                            color: Colors.blueAccent,
-                          ),
-                          SizedBox(width: 8),
-                          Text('Defer to Next Window'),
-                        ],
-                      ),
-                    ),
-                  if (!isDone && !isSkipped)
-                    const PopupMenuItem(
-                      value: 'skip',
-                      child: Row(
-                        children: [
-                          Icon(Icons.close_rounded, size: 18, color: Colors.grey),
-                          SizedBox(width: 8),
-                          Text('Skip for Today'),
-                        ],
-                      ),
-                    ),
-                  if (onDelete != null)
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
-                          SizedBox(width: 8),
-                          Text('Delete Habit', style: TextStyle(color: Colors.redAccent)),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
