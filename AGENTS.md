@@ -137,7 +137,19 @@ All new features, endpoints, repositories, and bug fixes must be built using the
 
 ---
 
-## 6. Definition of Done (DoD) Checklist
+## 6. Live Physical Device & ADB Verification Protocol
+
+All mobile UI changes, native integrations, and Health Connect workflows must be verified live on a physical device or emulator using ADB:
+
+1. **Wake & Unlock Display**: Always wake the screen (`adb shell input keyevent KEYCODE_WAKEUP`) and dismiss lockscreen (`adb shell input keyevent KEYCODE_MENU`) before interactions.
+2. **Build & Stream Install**: `env FLUTTER_STORAGE_BASE_URL=https://storage.googleapis.com flutter build apk --debug && adb install -r build/app/outputs/flutter-apk/app-debug.apk`.
+3. **Automate Touch Interaction**: Use `adb shell input tap <X> <Y>` and `adb shell input swipe <X1> <Y1> <X2> <Y2> <ms>` to exercise changed UI flows, open modals, and grant permissions.
+4. **Direct Binary Screencap**: Capture verification screenshots directly to conversation artifacts via `adb exec-out screencap -p > <artifactsDir>/screenshot_<name>.png`.
+5. **Inspect & Present Visual Proof**: Inspect every screenshot with `view_file` to confirm visual correctness before reporting, and present evidence to the user using Markdown carousels.
+
+---
+
+## 7. Definition of Done (DoD) Checklist
 
 Before submitting a PR or closing a task, verify every item:
 
@@ -145,6 +157,7 @@ Before submitting a PR or closing a task, verify every item:
 - [ ] **TDD Verified**: Failing test was written first, followed by passing code and refactoring.
 - [ ] **Go Tests**: `cd backend && go test -race -cover ./...` passes without errors or race conditions.
 - [ ] **Flutter Tests**: `cd frontend && flutter test` passes with all tests green.
+- [ ] **ADB Live Verification**: UI changes, animations, or native health pipelines verified on physical device via ADB with screenshots captured.
 - [ ] **LoC Limits Enforced**:
   - [ ] Every non-test source file $\le 200$ lines.
   - [ ] Every function/method $\le 40$ lines.
