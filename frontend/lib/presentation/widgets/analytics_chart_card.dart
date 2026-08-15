@@ -36,20 +36,18 @@ class AnalyticsChartCard extends StatelessWidget {
 
   String _formatValue(double val) {
     if (metric == MetricType.sleepDuration) {
-      return "${(val / 60.0).toStringAsFixed(1)}h";
+      if (val <= 0) return "0m";
+      final totalMin = val.round();
+      final hours = totalMin ~/ 60;
+      final mins = totalMin % 60;
+      if (hours == 0) return "${mins}m";
+      if (mins == 0) return "${hours}h";
+      return "${hours}h ${mins}m";
     }
-    if (metric == MetricType.weight) {
-      return "${val.toStringAsFixed(1)} kg";
-    }
-    if (metric == MetricType.steps) {
-      return val.toInt().toString();
-    }
-    if (metric == MetricType.caloriesBurned) {
-      return "${val.toInt()} kcal";
-    }
-    if (metric == MetricType.waterIntake) {
-      return "${val.toInt()} ml";
-    }
+    if (metric == MetricType.weight) return "${val.toStringAsFixed(1)} kg";
+    if (metric == MetricType.steps) return val.round().toString();
+    if (metric == MetricType.caloriesBurned) return "${val.round()} kcal";
+    if (metric == MetricType.waterIntake) return "${val.round()} ml";
     return val.toStringAsFixed(1);
   }
 
@@ -118,6 +116,14 @@ class AnalyticsChartCard extends StatelessWidget {
 
     return LineChart(
       LineChartData(
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: (touched) => touched.map((s) => LineTooltipItem(
+              _formatValue(s.y),
+              const TextStyle(color: Color(0xFFF8FAFC), fontWeight: FontWeight.bold, fontSize: 12),
+            )).toList(),
+          ),
+        ),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
