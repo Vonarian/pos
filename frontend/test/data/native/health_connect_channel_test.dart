@@ -78,7 +78,8 @@ void main() {
   test('HealthConnectChannel reads nutrition and calories aggregates', () async {
     final metrics = await HealthConnectChannel.getTodayMetrics();
     expect(metrics['STEPS'], 6200);
-    expect(metrics['CALORIES_BURNED'], 2100.0);
+    expect(metrics['CALORIES_CONSUMED'], 2100.0);
+    expect(metrics['CALORIES_BURNED'], 450.0);
     expect(metrics['SLEEP_DURATION'], 480.0);
     expect(metrics['WEIGHT'], 75.0);
   });

@@ -21,6 +21,8 @@ class AnalyticsChartCard extends StatelessWidget {
     switch (metric) {
       case MetricType.steps:
         return Colors.cyanAccent.shade400;
+      case MetricType.caloriesConsumed:
+        return Colors.amberAccent.shade400;
       case MetricType.caloriesBurned:
         return Colors.deepOrangeAccent.shade200;
       case MetricType.sleepDuration:
@@ -38,15 +40,15 @@ class AnalyticsChartCard extends StatelessWidget {
     if (metric == MetricType.sleepDuration) {
       if (val <= 0) return "0m";
       final totalMin = val.round();
-      final hours = totalMin ~/ 60;
-      final mins = totalMin % 60;
-      if (hours == 0) return "${mins}m";
-      if (mins == 0) return "${hours}h";
-      return "${hours}h ${mins}m";
+      final h = totalMin ~/ 60;
+      final m = totalMin % 60;
+      return h == 0 ? "${m}m" : (m == 0 ? "${h}h" : "${h}h ${m}m");
     }
     if (metric == MetricType.weight) return "${val.toStringAsFixed(1)} kg";
     if (metric == MetricType.steps) return val.round().toString();
-    if (metric == MetricType.caloriesBurned) return "${val.round()} kcal";
+    if (metric == MetricType.caloriesConsumed || metric == MetricType.caloriesBurned) {
+      return "${val.round()} kcal";
+    }
     if (metric == MetricType.waterIntake) return "${val.round()} ml";
     return val.toStringAsFixed(1);
   }

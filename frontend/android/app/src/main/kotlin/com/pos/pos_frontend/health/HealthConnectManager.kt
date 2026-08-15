@@ -129,10 +129,9 @@ class HealthConnectManager(private val context: Context) {
         val (start, end) = getDayRange(0L)
         val nutrition = readNutritionForRange(start, end)
         val burned = readCaloriesForRange(start, end)
-        val calories = if (nutrition > 0.0) nutrition else burned
         return mapOf(
             "steps" to readStepsForRange(start, end),
-            "calories" to calories,
+            "calories" to burned,
             "nutritionCalories" to nutrition,
             "burnedCalories" to burned,
             "sleepMinutes" to readSleepForRange(start, end),
@@ -149,12 +148,11 @@ class HealthConnectManager(private val context: Context) {
             val dateStr = LocalDate.now(zone).minusDays(i.toLong()).toString()
             val nutrition = readNutritionForRange(start, end)
             val burned = readCaloriesForRange(start, end)
-            val calories = if (nutrition > 0.0) nutrition else burned
             history.add(
                 mapOf(
                     "date" to dateStr,
                     "steps" to readStepsForRange(start, end),
-                    "calories" to calories,
+                    "calories" to burned,
                     "nutritionCalories" to nutrition,
                     "burnedCalories" to burned,
                     "sleepMinutes" to readSleepForRange(start, end),

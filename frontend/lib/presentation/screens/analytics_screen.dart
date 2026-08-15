@@ -93,7 +93,8 @@ class AnalyticsScreen extends ConsumerWidget {
   Widget _buildMetricPills(WidgetRef ref, MetricType selectedMetric) {
     const tabs = [
       (MetricType.steps, 'Steps', Icons.directions_walk_rounded, Color(0xFF22D3EE)),
-      (MetricType.caloriesBurned, 'Calories', Icons.local_fire_department_rounded, Color(0xFFFF7043)),
+      (MetricType.caloriesConsumed, 'Food', Icons.restaurant_rounded, Color(0xFFFBBF24)),
+      (MetricType.caloriesBurned, 'Burned', Icons.local_fire_department_rounded, Color(0xFFFF7043)),
       (MetricType.sleepDuration, 'Sleep', Icons.bedtime_rounded, Color(0xFFE879F9)),
       (MetricType.weight, 'Weight', Icons.monitor_weight_rounded, Color(0xFF2DD4BF)),
       (MetricType.waterIntake, 'Water', Icons.water_drop_rounded, Color(0xFF38BDF8)),

@@ -40,7 +40,8 @@ void main() {
     expect(find.text('30D'), findsOneWidget);
 
     expect(find.text('Steps'), findsOneWidget);
-    expect(find.text('Calories'), findsOneWidget);
+    expect(find.text('Food'), findsOneWidget);
+    expect(find.text('Burned'), findsOneWidget);
     expect(find.text('Sleep'), findsOneWidget);
     expect(find.text('Weight'), findsOneWidget);
     expect(find.text('Water'), findsOneWidget);

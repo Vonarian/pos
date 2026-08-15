@@ -30,59 +30,25 @@ class MetricSummaryChart extends StatelessWidget {
   }
 
   Widget _buildConnectBanner(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF141C2B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.health_and_safety_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 24,
-            ),
-          ),
+          Icon(Icons.health_and_safety_rounded, color: theme.colorScheme.primary, size: 24),
           const SizedBox(width: 14),
           const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Connect Health Connect',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFF8FAFC),
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Sync steps, calories, sleep & weight passively',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                ),
-              ],
+            child: Text(
+              'Sync steps, food, calories & sleep passively',
+              style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
             ),
           ),
-          const SizedBox(width: 8),
           FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
             onPressed: onConnect,
             child: const Text('Grant Access', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
@@ -95,19 +61,10 @@ class MetricSummaryChart extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Flexible(
-          child: Text(
-            'Health Telemetry',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFF8FAFC),
-            ),
-          ),
+        const Text(
+          'Health Telemetry',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFF8FAFC)),
         ),
-        const SizedBox(width: 8),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -141,22 +98,15 @@ class MetricSummaryChart extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMetricsGrid(Map<String, double> metrics) {
     final steps = metrics['STEPS'] ?? 0.0;
-    final calories = metrics['CALORIES_BURNED'] ?? 0.0;
+    final food = metrics['CALORIES_CONSUMED'] ?? 0.0;
+    final burned = metrics['CALORIES_BURNED'] ?? 0.0;
     final sleepMin = metrics['SLEEP_DURATION'] ?? 0.0;
     final weight = metrics['WEIGHT'] ?? 0.0;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeader(),
-        const SizedBox(height: 12),
-        if (!isConnected && onConnect != null) ...[
-          _buildConnectBanner(context),
-          const SizedBox(height: 12),
-        ],
         Row(
           children: [
             Expanded(
@@ -173,10 +123,38 @@ class MetricSummaryChart extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: MetricTelemetryCard(
-                label: 'Calories',
-                value: "${calories.round()} kcal",
+                label: 'Sleep',
+                value: _formatSleep(sleepMin),
+                target: '8h 0m',
+                progress: (sleepMin / 480.0).clamp(0.0, 1.0),
+                icon: Icons.bedtime_rounded,
+                color: Colors.purpleAccent.shade100,
+                onTap: onMetricTap != null ? () => onMetricTap!(MetricType.sleepDuration) : null,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: MetricTelemetryCard(
+                label: 'Food (In)',
+                value: "${food.round()} kcal",
                 target: '2,400',
-                progress: (calories / 2400.0).clamp(0.0, 1.0),
+                progress: (food / 2400.0).clamp(0.0, 1.0),
+                icon: Icons.restaurant_rounded,
+                color: Colors.amberAccent.shade400,
+                onTap: onMetricTap != null ? () => onMetricTap!(MetricType.caloriesConsumed) : null,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: MetricTelemetryCard(
+                label: 'Burned (Out)',
+                value: "${burned.round()} kcal",
+                target: '500',
+                progress: (burned / 500.0).clamp(0.0, 1.0),
                 icon: Icons.local_fire_department_rounded,
                 color: Colors.deepOrangeAccent.shade200,
                 onTap: onMetricTap != null ? () => onMetricTap!(MetricType.caloriesBurned) : null,
@@ -187,18 +165,6 @@ class MetricSummaryChart extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(
-              child: MetricTelemetryCard(
-                label: 'Sleep',
-                value: _formatSleep(sleepMin),
-                target: '8h 0m',
-                progress: (sleepMin / 480.0).clamp(0.0, 1.0),
-                icon: Icons.bedtime_rounded,
-                color: Colors.purpleAccent.shade100,
-                onTap: onMetricTap != null ? () => onMetricTap!(MetricType.sleepDuration) : null,
-              ),
-            ),
-            const SizedBox(width: 8),
             Expanded(
               child: MetricTelemetryCard(
                 label: 'Weight',
@@ -212,6 +178,22 @@ class MetricSummaryChart extends StatelessWidget {
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHeader(),
+        const SizedBox(height: 12),
+        if (!isConnected && onConnect != null) ...[
+          _buildConnectBanner(context),
+          const SizedBox(height: 12),
+        ],
+        _buildMetricsGrid(metrics),
       ],
     );
   }

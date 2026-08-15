@@ -50,8 +50,11 @@ class HealthConnectChannel {
       final res = await _channel.invokeMapMethod<String, dynamic>('getTodayMetrics');
       if (res == null) return {};
       final map = <String, double>{};
+      final nutrition = (res['nutritionCalories'] as num?)?.toDouble() ?? 0.0;
+      final burned = (res['burnedCalories'] as num?)?.toDouble() ?? 0.0;
       map['STEPS'] = (res['steps'] as num?)?.toDouble() ?? 0.0;
-      map['CALORIES_BURNED'] = (res['calories'] as num?)?.toDouble() ?? 0.0;
+      map['CALORIES_CONSUMED'] = nutrition;
+      map['CALORIES_BURNED'] = burned;
       map['SLEEP_DURATION'] = (res['sleepMinutes'] as num?)?.toDouble() ?? 0.0;
       map['WEIGHT'] = (res['weightKg'] as num?)?.toDouble() ?? 0.0;
       return map;
@@ -97,13 +100,27 @@ class HealthConnectChannel {
           ));
         }
 
-        final calories = (item['calories'] as num?)?.toDouble() ?? 0.0;
-        if (calories > 0) {
+        final nutrition = (item['nutritionCalories'] as num?)?.toDouble() ?? 0.0;
+        if (nutrition > 0) {
           points.add(HealthDataPoint(
-            id: 'hc-cal-$dateStr',
+            id: 'hc-food-$dateStr',
+            source: 'health_connect',
+            metric: MetricType.caloriesConsumed,
+            value: nutrition,
+            unit: 'kcal',
+            startTime: startOfDay,
+            endTime: endOfDay,
+            syncedAt: now,
+          ));
+        }
+
+        final burned = (item['burnedCalories'] as num?)?.toDouble() ?? 0.0;
+        if (burned > 0) {
+          points.add(HealthDataPoint(
+            id: 'hc-burn-$dateStr',
             source: 'health_connect',
             metric: MetricType.caloriesBurned,
-            value: calories,
+            value: burned,
             unit: 'kcal',
             startTime: startOfDay,
             endTime: endOfDay,
