@@ -6,22 +6,22 @@ on:
       - main
       - dev
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       channel:
-        description: 'Release Channel'
+        description: "Release Channel"
         required: true
-        default: 'stable'
+        default: "stable"
         type: choice
         options:
           - stable
           - dev
           - nightly
       version:
-        description: 'Explicit Version Tag for Stable (e.g. v1.0.0, or leave empty to use VERSION file)'
+        description: "Explicit Version Tag for Stable (e.g. v1.0.0, or leave empty to use VERSION file)"
         required: false
-        default: ''
+        default: ""
 
 permissions:
   contents: write
@@ -44,7 +44,7 @@ jobs:
       release_title: ${{ steps.calc.outputs.release_title }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Calculate Version & Channel
         id: calc
@@ -129,42 +129,42 @@ jobs:
             goos: linux
             goarch: amd64
             archive: tar.gz
-            ext: ''
+            ext: ""
           - target: linux-arm64
             goos: linux
             goarch: arm64
             archive: tar.gz
-            ext: ''
+            ext: ""
           - target: darwin-amd64
             goos: darwin
             goarch: amd64
             archive: tar.gz
-            ext: ''
+            ext: ""
           - target: darwin-arm64
             goos: darwin
             goarch: arm64
             archive: tar.gz
-            ext: ''
+            ext: ""
           - target: windows-amd64
             goos: windows
             goarch: amd64
             archive: zip
-            ext: '.exe'
+            ext: ".exe"
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: "1.26.x"
           cache-dependency-path: backend/go.sum
 
       - name: Build Go Server Binary
         working-directory: backend
         env:
-          CGO_ENABLED: '0'
+          CGO_ENABLED: "0"
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
@@ -207,18 +207,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
           cache: true
 
       - name: Install Flutter dependencies
@@ -273,7 +273,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
