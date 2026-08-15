@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:drift/drift.dart';
+
 import '../local/database.dart';
 import '../remote/api_client.dart';
 import '../../domain/models/routine_item.dart';
@@ -8,10 +10,7 @@ class OfflineRoutineRepository {
   final AppDatabase db;
   final ApiClient? apiClient;
 
-  OfflineRoutineRepository({
-    required this.db,
-    this.apiClient,
-  });
+  OfflineRoutineRepository({required this.db, this.apiClient});
 
   Stream<List<RoutineItem>> watchRoutinesForDate(String date) {
     return db.routineDao.watchRoutinesForDate(date).map((rows) {
@@ -86,7 +85,9 @@ class OfflineRoutineRepository {
   }
 
   Future<void> createRoutine(RoutineItem item) async {
-    await db.routineDao.upsertRoutine(_mapDomainToCompanion(item, isSynced: false));
+    await db.routineDao.upsertRoutine(
+      _mapDomainToCompanion(item, isSynced: false),
+    );
 
     if (apiClient != null) {
       try {
@@ -149,7 +150,10 @@ class OfflineRoutineRepository {
     );
   }
 
-  RoutineItemsTableCompanion _mapDomainToCompanion(RoutineItem item, {bool isSynced = false}) {
+  RoutineItemsTableCompanion _mapDomainToCompanion(
+    RoutineItem item, {
+    bool isSynced = false,
+  }) {
     return RoutineItemsTableCompanion.insert(
       id: item.id,
       templateId: Value(item.templateId),

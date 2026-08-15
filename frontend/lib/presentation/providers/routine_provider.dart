@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
 import '../../data/local/database.dart';
 import '../../data/remote/api_client.dart';
 import '../../data/repositories/offline_routine_repository.dart';
@@ -15,7 +16,9 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient();
 });
 
-final offlineRoutineRepositoryProvider = Provider<OfflineRoutineRepository>((ref) {
+final offlineRoutineRepositoryProvider = Provider<OfflineRoutineRepository>((
+  ref,
+) {
   final db = ref.watch(databaseProvider);
   final client = ref.watch(apiClientProvider);
   return OfflineRoutineRepository(db: db, apiClient: client);
@@ -32,9 +35,13 @@ class SelectedDateNotifier extends Notifier<String> {
   }
 }
 
-final selectedDateProvider = NotifierProvider<SelectedDateNotifier, String>(SelectedDateNotifier.new);
+final selectedDateProvider = NotifierProvider<SelectedDateNotifier, String>(
+  SelectedDateNotifier.new,
+);
 
-final routinesStreamProvider = StreamProvider.autoDispose<List<RoutineItem>>((ref) {
+final routinesStreamProvider = StreamProvider.autoDispose<List<RoutineItem>>((
+  ref,
+) {
   final repo = ref.watch(offlineRoutineRepositoryProvider);
   final date = ref.watch(selectedDateProvider);
   return repo.watchRoutinesForDate(date);
@@ -61,7 +68,8 @@ class QuadrantState {
     required this.completedCount,
   });
 
-  double get adherenceRate => totalCount == 0 ? 0.0 : completedCount / totalCount;
+  double get adherenceRate =>
+      totalCount == 0 ? 0.0 : completedCount / totalCount;
 }
 
 TimeWindow calculateCurrentWindow(DateTime now) {

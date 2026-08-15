@@ -1,12 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class MetricSummaryChart extends StatelessWidget {
   final Map<String, double> metrics;
 
-  const MetricSummaryChart({
-    super.key,
-    required this.metrics,
-  });
+  const MetricSummaryChart({super.key, required this.metrics});
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +117,9 @@ class _MetricCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.15)),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +130,11 @@ class _MetricCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),

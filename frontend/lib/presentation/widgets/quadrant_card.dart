@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+
 import '../../domain/models/routine_item.dart';
 import 'routine_item_tile.dart';
 
@@ -26,7 +27,9 @@ class QuadrantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completedCount = items.where((i) => i.status == ItemStatus.completed).length;
+    final completedCount = items
+        .where((i) => i.status == ItemStatus.completed)
+        .length;
     final totalCount = items.length;
     final progress = totalCount == 0 ? 1.0 : completedCount / totalCount;
 
@@ -44,10 +47,11 @@ class QuadrantCard extends StatelessWidget {
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                  color: Theme.of(context).colorScheme.primary
+                      .withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
-                )
+                ),
               ]
             : null,
       ),
@@ -63,7 +67,8 @@ class QuadrantCard extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isActive
-                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
+                        ? Theme.of(context).colorScheme.primary
+                              .withValues(alpha: 0.15)
                         : Colors.grey.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -92,7 +97,10 @@ class QuadrantCard extends StatelessWidget {
                           if (isActive) ...[
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.primary,
                                 borderRadius: BorderRadius.circular(4),
@@ -142,7 +150,9 @@ class QuadrantCard extends StatelessWidget {
                   minHeight: 4,
                   backgroundColor: Colors.grey.withValues(alpha: 0.15),
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    progress == 1.0 ? Colors.teal : Theme.of(context).colorScheme.primary,
+                    progress == 1.0
+                        ? Colors.teal
+                        : Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),

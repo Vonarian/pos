@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+
 import '../database.dart';
 
 part 'routine_dao.g.dart';
@@ -22,15 +23,18 @@ class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
   }
 
   Future<RoutineItemsTableData?> getRoutineById(String id) {
-    return (select(routineItemsTable)..where((tbl) => tbl.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      routineItemsTable,
+    )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
   Future<int> upsertRoutine(RoutineItemsTableCompanion item) {
     return into(routineItemsTable).insertOnConflictUpdate(item);
   }
 
-  Future<void> batchUpsertRoutines(List<RoutineItemsTableCompanion> items) async {
+  Future<void> batchUpsertRoutines(
+    List<RoutineItemsTableCompanion> items,
+  ) async {
     await batch((b) {
       b.insertAllOnConflictUpdate(routineItemsTable, items);
     });
@@ -58,8 +62,9 @@ class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
   }
 
   Future<List<RoutineItemsTableData>> getUnsyncedRoutines() {
-    return (select(routineItemsTable)..where((tbl) => tbl.isSynced.equals(false)))
-        .get();
+    return (select(
+      routineItemsTable,
+    )..where((tbl) => tbl.isSynced.equals(false))).get();
   }
 
   Future<void> markAsSynced(List<String> ids) {
@@ -69,15 +74,16 @@ class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
   }
 
   Future<int> resetPendingToMissed(String beforeDate) {
-    return (update(routineItemsTable)
-          ..where((tbl) =>
+    return (update(routineItemsTable)..where(
+          (tbl) =>
               tbl.scheduledDate.isSmallerThanValue(beforeDate) &
-              tbl.status.equals('PENDING')))
+              tbl.status.equals('PENDING'),
+        ))
         .write(
-      RoutineItemsTableCompanion(
-        status: const Value('MISSED'),
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
+          RoutineItemsTableCompanion(
+            status: const Value('MISSED'),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
   }
 }

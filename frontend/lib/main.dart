@@ -1,14 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'presentation/screens/dashboard_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    const ProviderScope(
-      child: POSApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: POSApp()));
 }
 
 class POSApp extends StatelessWidget {
@@ -28,7 +25,9 @@ class POSApp extends StatelessWidget {
         ),
         cardTheme: CardThemeData(
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
       darkTheme: ThemeData(
@@ -41,7 +40,9 @@ class POSApp extends StatelessWidget {
         cardColor: const Color(0xFF1E293B),
         cardTheme: CardThemeData(
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
       home: const DashboardScreen(),

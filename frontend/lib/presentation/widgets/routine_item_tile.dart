@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+
 import '../../domain/models/routine_item.dart';
 
 class RoutineItemTile extends StatelessWidget {
@@ -77,9 +78,13 @@ class RoutineItemTile extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(item.category).withValues(alpha: 0.15),
+                          color: _getCategoryColor(item.category)
+                              .withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -95,11 +100,18 @@ class RoutineItemTile extends StatelessWidget {
                       if (item.metadata['nfc_tag'] != null)
                         Row(
                           children: [
-                            Icon(Icons.nfc_rounded, size: 12, color: Colors.blueGrey.shade400),
+                            Icon(
+                              Icons.nfc_rounded,
+                              size: 12,
+                              color: Colors.blueGrey.shade400,
+                            ),
                             const SizedBox(width: 2),
                             Text(
                               'NFC',
-                              style: TextStyle(fontSize: 10, color: Colors.blueGrey.shade400),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.blueGrey.shade400,
+                              ),
                             ),
                           ],
                         ),
@@ -114,8 +126,8 @@ class RoutineItemTile extends StatelessWidget {
                       decoration: isDone
                           ? TextDecoration.lineThrough
                           : isSkipped
-                              ? TextDecoration.lineThrough
-                              : null,
+                          ? TextDecoration.lineThrough
+                          : null,
                       color: isDone || isSkipped ? Colors.grey : null,
                     ),
                   ),
@@ -123,7 +135,10 @@ class RoutineItemTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       "Dosage: ${item.metadata['dosage']}",
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ],
@@ -133,7 +148,11 @@ class RoutineItemTile extends StatelessWidget {
             // Actions Menu
             if (!isDone)
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert_rounded, size: 20, color: Colors.grey),
+                icon: const Icon(
+                  Icons.more_vert_rounded,
+                  size: 20,
+                  color: Colors.grey,
+                ),
                 onSelected: (value) {
                   if (value == 'defer') onDefer();
                   if (value == 'skip') onSkip();
@@ -143,7 +162,11 @@ class RoutineItemTile extends StatelessWidget {
                     value: 'defer',
                     child: Row(
                       children: [
-                        Icon(Icons.schedule_send_rounded, size: 18, color: Colors.blue),
+                        Icon(
+                          Icons.schedule_send_rounded,
+                          size: 18,
+                          color: Colors.blue,
+                        ),
                         SizedBox(width: 8),
                         Text('Defer to Next Window'),
                       ],

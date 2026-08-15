@@ -65,7 +65,9 @@ class RoutineItem {
       templateId: json['template_id'] as String?,
       title: json['title'] as String,
       category: json['category'] as String,
-      timeWindow: TimeWindow.fromString(json['time_window'] as String? ?? 'MORNING'),
+      timeWindow: TimeWindow.fromString(
+        json['time_window'] as String? ?? 'MORNING',
+      ),
       scheduledDate: json['scheduled_date'] as String,
       status: ItemStatus.fromString(json['status'] as String? ?? 'PENDING'),
       completedAt: json['completed_at'] != null

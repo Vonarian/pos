@@ -8,31 +8,24 @@ void main() {
   const channel = MethodChannel('com.pos.app/health');
 
   setUp(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      channel,
-      (MethodCall methodCall) async {
-        switch (methodCall.method) {
-          case 'checkAvailability':
-            return true;
-          case 'hasPermissions':
-            return true;
-          case 'getTodayAggregates':
-            return {
-              'steps': 6200,
-              'calories': 1850.5,
-            };
-          default:
-            return null;
-        }
-      },
-    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+          switch (methodCall.method) {
+            case 'checkAvailability':
+              return true;
+            case 'hasPermissions':
+              return true;
+            case 'getTodayAggregates':
+              return {'steps': 6200, 'calories': 1850.5};
+            default:
+              return null;
+          }
+        });
   });
 
   tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      channel,
-      null,
-    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null);
   });
 
   test('HealthDataPoint domain parsing from health connect channel', () {

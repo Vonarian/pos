@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+
 import '../database.dart';
 
 part 'metric_dao.g.dart';
@@ -7,7 +8,9 @@ part 'metric_dao.g.dart';
 class MetricDao extends DatabaseAccessor<AppDatabase> with _$MetricDaoMixin {
   MetricDao(super.db);
 
-  Future<void> batchUpsertMetrics(List<HealthMetricsTableCompanion> points) async {
+  Future<void> batchUpsertMetrics(
+    List<HealthMetricsTableCompanion> points,
+  ) async {
     await batch((b) {
       b.insertAllOnConflictUpdate(healthMetricsTable, points);
     });
@@ -21,8 +24,9 @@ class MetricDao extends DatabaseAccessor<AppDatabase> with _$MetricDaoMixin {
   }
 
   Future<List<HealthMetricsTableData>> getUnsyncedMetrics() {
-    return (select(healthMetricsTable)..where((tbl) => tbl.isSynced.equals(false)))
-        .get();
+    return (select(
+      healthMetricsTable,
+    )..where((tbl) => tbl.isSynced.equals(false))).get();
   }
 
   Future<void> markAsSynced(List<String> ids) {
@@ -32,12 +36,17 @@ class MetricDao extends DatabaseAccessor<AppDatabase> with _$MetricDaoMixin {
   }
 
   Stream<List<HealthMetricsTableData>> watchMetricsForRange(
-      String metric, DateTime from, DateTime to) {
+    String metric,
+    DateTime from,
+    DateTime to,
+  ) {
     return (select(healthMetricsTable)
-          ..where((tbl) =>
-              tbl.metric.equals(metric) &
-              tbl.startTime.isBiggerOrEqualValue(from) &
-              tbl.endTime.isSmallerOrEqualValue(to))
+          ..where(
+            (tbl) =>
+                tbl.metric.equals(metric) &
+                tbl.startTime.isBiggerOrEqualValue(from) &
+                tbl.endTime.isSmallerOrEqualValue(to),
+          )
           ..orderBy([(t) => OrderingTerm(expression: t.startTime)]))
         .watch();
   }
@@ -46,11 +55,13 @@ class MetricDao extends DatabaseAccessor<AppDatabase> with _$MetricDaoMixin {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    final points = await (select(healthMetricsTable)
-          ..where((tbl) =>
-              tbl.startTime.isBiggerOrEqualValue(startOfDay) &
-              tbl.startTime.isSmallerThanValue(endOfDay)))
-        .get();
+    final points =
+        await (select(healthMetricsTable)..where(
+              (tbl) =>
+                  tbl.startTime.isBiggerOrEqualValue(startOfDay) &
+                  tbl.startTime.isSmallerThanValue(endOfDay),
+            ))
+            .get();
 
     final summary = <String, double>{};
     for (final pt in points) {
