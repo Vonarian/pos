@@ -26,7 +26,7 @@ class POSApp extends StatelessWidget {
           seedColor: const Color(0xFF0F766E), // Deep Teal
           brightness: Brightness.light,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
@@ -39,7 +39,7 @@ class POSApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate Dark
         cardColor: const Color(0xFF1E293B),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),

@@ -5,7 +5,7 @@ part 'routine_dao.g.dart';
 
 @DriftAccessor(tables: [RoutineItemsTable])
 class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
-  RoutineDao(AppDatabase db) : super(db);
+  RoutineDao(super.db);
 
   Future<List<RoutineItemsTableData>> getRoutinesForDate(String date) {
     return (select(routineItemsTable)

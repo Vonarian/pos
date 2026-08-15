@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pos_frontend/data/native/health_connect_channel.dart';
 import 'package:pos_frontend/domain/models/health_data_point.dart';
 
 void main() {

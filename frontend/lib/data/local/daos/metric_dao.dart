@@ -5,7 +5,7 @@ part 'metric_dao.g.dart';
 
 @DriftAccessor(tables: [HealthMetricsTable])
 class MetricDao extends DatabaseAccessor<AppDatabase> with _$MetricDaoMixin {
-  MetricDao(AppDatabase db) : super(db);
+  MetricDao(super.db);
 
   Future<void> batchUpsertMetrics(List<HealthMetricsTableCompanion> points) async {
     await batch((b) {

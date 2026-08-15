@@ -1,0 +1,345 @@
+openapi: 3.1.0
+info:
+  title: Personal Operating System (POS) API
+  description: Local-First Daily Habit, Telemetry & Home Assistant Sync Daemon API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local POS Daemon
+
+paths:
+  /api/v1/health:
+    get:
+      summary: Health Check
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: 1.0.0
+
+  /api/v1/routines/quadrants:
+    get:
+      summary: Retrieve 4-Quadrant View for a given date
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2026-08-15"
+      responses:
+        '200':
+          description: Organized 4-quadrant routine view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuadrantView'
+
+  /api/v1/routines/complete:
+    post:
+      summary: Mark a routine item as COMPLETED
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                completed_at:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Routine marked as completed
+
+  /api/v1/routines/skip:
+    post:
+      summary: Skip a routine item for today
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+      responses:
+        '200':
+          description: Routine marked as skipped
+
+  /api/v1/routines/defer:
+    post:
+      summary: Defer a routine item to the next time fence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+      responses:
+        '200':
+          description: Routine deferred to next time fence
+
+  /api/v1/routines:
+    post:
+      summary: Create a new routine item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineItem'
+      responses:
+        '201':
+          description: Routine item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineItem'
+
+  /api/v1/metrics/daily-summary:
+    get:
+      summary: Retrieve normalized health metric summary for a date
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Aggregated metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricSummary'
+
+  /api/v1/metrics/ingest:
+    post:
+      summary: Batch ingest normalized health data points
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/HealthDataPoint'
+      responses:
+        '200':
+          description: Ingestion result
+
+  /api/v1/sync/push:
+    post:
+      summary: Push client mutations to backend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPushRequest'
+      responses:
+        '200':
+          description: Sync confirmation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPushResponse'
+
+  /api/v1/sync/pull:
+    get:
+      summary: Pull delta changes since a given timestamp
+      parameters:
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Delta updates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPullResponse'
+
+components:
+  schemas:
+    ItemStatus:
+      type: string
+      enum: [PENDING, COMPLETED, SKIPPED, MISSED]
+
+    TimeWindow:
+      type: string
+      enum: [MORNING, AFTERNOON, EVENING, NIGHT]
+
+    MetricType:
+      type: string
+      enum: [STEPS, CALORIES_BURNED, SLEEP_DURATION, WEIGHT, BODY_FAT, WORKOUT_SESSION]
+
+    RoutineItem:
+      type: object
+      required: [id, title, category, time_window, scheduled_date, status]
+      properties:
+        id:
+          type: string
+        template_id:
+          type: string
+        title:
+          type: string
+        category:
+          type: string
+        time_window:
+          $ref: '#/components/schemas/TimeWindow'
+        scheduled_date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/ItemStatus'
+        completed_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+        updated_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    HealthDataPoint:
+      type: object
+      required: [id, source, metric, value, unit, start_time, end_time]
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        metric:
+          $ref: '#/components/schemas/MetricType'
+        value:
+          type: number
+        unit:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        external_id:
+          type: string
+        synced_at:
+          type: string
+          format: date-time
+
+    QuadrantView:
+      type: object
+      properties:
+        date:
+          type: string
+        active_window:
+          $ref: '#/components/schemas/TimeWindow'
+        morning:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+        afternoon:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+        evening:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+        night:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+        total_count:
+          type: integer
+        completed_count:
+          type: integer
+        adherence_rate:
+          type: number
+
+    MetricSummary:
+      type: object
+      properties:
+        date:
+          type: string
+        steps:
+          type: number
+        calories_burned:
+          type: number
+        sleep_minutes:
+          type: number
+        weight_kg:
+          type: number
+        body_fat_pct:
+          type: number
+
+    SyncPushRequest:
+      type: object
+      properties:
+        routines:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthDataPoint'
+
+    SyncPushResponse:
+      type: object
+      properties:
+        synced_routines:
+          type: integer
+        synced_metrics:
+          type: integer
+        synced_at:
+          type: string
+          format: date-time
+
+    SyncPullResponse:
+      type: object
+      properties:
+        routines:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthDataPoint'
+        server_time:
+          type: string
+          format: date-time
