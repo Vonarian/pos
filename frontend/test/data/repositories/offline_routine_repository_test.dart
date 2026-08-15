@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pos_frontend/data/local/database.dart';
@@ -153,5 +154,28 @@ void main() {
     // Verify tomorrow's item updated
     final tomorrowRoutines = await repo.getRoutinesForDate('2026-08-16');
     expect(tomorrowRoutines.first.title, 'Water 2L Hydration');
+  });
+
+  test('offline repository auto-migrates un-templated legacy habit and spawns tomorrow', () async {
+    final now = DateTime.now();
+    // Directly insert legacy row into DB without templateId
+    await db.routineDao.upsertRoutine(
+      RoutineItemsTableCompanion.insert(
+        id: 'legacy-creatine',
+        title: 'Legacy Creatine',
+        category: 'Meds/Supps',
+        timeWindow: 'MORNING',
+        scheduledDate: '2026-08-15',
+        status: const Value('PENDING'),
+        updatedAt: now,
+        createdAt: now,
+      ),
+    );
+
+    // Watch tomorrow's routines
+    final tomorrowRoutines = await repo.watchRoutinesForDate('2026-08-16').first;
+    expect(tomorrowRoutines.length, 1);
+    expect(tomorrowRoutines.first.title, 'Legacy Creatine');
+    expect(tomorrowRoutines.first.scheduledDate, '2026-08-16');
   });
 }
