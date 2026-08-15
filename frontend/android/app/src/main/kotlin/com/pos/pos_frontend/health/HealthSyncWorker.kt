@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import androidx.health.connect.client.changes.UpsertionChange
 import androidx.health.connect.client.records.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -47,7 +48,8 @@ class HealthSyncWorker(
 
             val changes = manager.getChanges(token)
             if (changes != null) {
-                Log.d(TAG, "Fetched differential Health Connect changes: ${changes.upsertionRecords.size} upserts")
+                val upserts = changes.changes.filterIsInstance<UpsertionChange>()
+                Log.d(TAG, "Fetched differential Health Connect changes: ${upserts.size} upserts")
                 // Persist new token
                 prefs.edit().putString(KEY_CHANGES_TOKEN, changes.nextChangesToken).apply()
             }
