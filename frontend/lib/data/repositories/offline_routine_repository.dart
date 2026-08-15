@@ -14,9 +14,9 @@ class OfflineRoutineRepository {
 
   OfflineRoutineRepository({required this.db, this.apiClient});
 
-  Stream<List<RoutineItem>> watchRoutinesForDate(String date) {
-    OfflineRoutineSpawner.ensureSpawnedForDate(db, date);
-    return db.routineDao.watchRoutinesForDate(date).map((rows) {
+  Stream<List<RoutineItem>> watchRoutinesForDate(String date) async* {
+    await OfflineRoutineSpawner.ensureSpawnedForDate(db, date);
+    yield* db.routineDao.watchRoutinesForDate(date).map((rows) {
       return rows.map(OfflineRoutineMapper.mapRowToDomain).toList();
     });
   }
@@ -73,7 +73,8 @@ class OfflineRoutineRepository {
 
   Future<void> updateRoutine(RoutineItem item, {bool applyToFuture = true}) async {
     final existing = await db.routineDao.getRoutineById(item.id);
-    final effectiveTemplateId = item.templateId ?? existing?.templateId;
+    final effectiveTemplateId =
+        item.templateId ?? existing?.templateId ?? 'tpl_${item.id}';
     final itemToSave = item.copyWith(templateId: effectiveTemplateId);
 
     await db.routineDao.upsertRoutine(

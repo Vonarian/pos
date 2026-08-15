@@ -22,6 +22,10 @@ class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
         .watch();
   }
 
+  Future<List<RoutineItemsTableData>> getAllRoutines() {
+    return select(routineItemsTable).get();
+  }
+
   Future<RoutineItemsTableData?> getRoutineById(String id) {
     return (select(
       routineItemsTable,
