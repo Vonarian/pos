@@ -1,0 +1,204 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build-backend:
+    name: Build Backend (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-amd64
+            goos: linux
+            goarch: amd64
+            archive: tar.gz
+            ext: ''
+          - target: linux-arm64
+            goos: linux
+            goarch: arm64
+            archive: tar.gz
+            ext: ''
+          - target: darwin-amd64
+            goos: darwin
+            goarch: amd64
+            archive: tar.gz
+            ext: ''
+          - target: darwin-arm64
+            goos: darwin
+            goarch: arm64
+            archive: tar.gz
+            ext: ''
+          - target: windows-amd64
+            goos: windows
+            goarch: amd64
+            archive: zip
+            ext: '.exe'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache-dependency-path: backend/go.sum
+
+      - name: Build Binary
+        working-directory: backend
+        env:
+          CGO_ENABLED: '0'
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          if [ -z "$VERSION" ] || [[ "$VERSION" != v* ]]; then
+            VERSION="${{ inputs.tag_name }}"
+          fi
+          mkdir -p bin
+          go build -ldflags="-s -w" -o bin/pos-server${{ matrix.ext }} ./cmd/server
+
+      - name: Package Archive
+        id: package
+        run: |
+          mkdir -p dist
+          PKG_NAME="pos-server-${{ matrix.target }}"
+          STAGE_DIR="stage_${PKG_NAME}"
+          mkdir -p "${STAGE_DIR}"
+          cp backend/bin/pos-server${{ matrix.ext }} "${STAGE_DIR}/"
+          cp -r backend/migrations "${STAGE_DIR}/" || true
+          cp backend/README.md "${STAGE_DIR}/" || true
+
+          if [ "${{ matrix.archive }}" = "zip" ]; then
+            (cd "${STAGE_DIR}" && zip -r "../dist/${PKG_NAME}.zip" .)
+          else
+            tar -czvf "dist/${PKG_NAME}.tar.gz" -C "${STAGE_DIR}" .
+          fi
+
+      - name: Upload Backend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  build-android:
+    name: Build Android APKs & AppBundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: frontend
+        run: flutter pub get
+
+      - name: Generate Drift SQLite Bindings
+        working-directory: frontend
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Split-Per-ABI APKs
+        working-directory: frontend
+        run: flutter build apk --release --split-per-abi
+
+      - name: Build Universal APK
+        working-directory: frontend
+        run: flutter build apk --release
+
+      - name: Build Android App Bundle (.aab)
+        working-directory: frontend
+        run: flutter build appbundle --release
+
+      - name: Stage Android Artifacts
+        run: |
+          mkdir -p dist-android
+          APK_DIR="frontend/build/app/outputs/flutter-apk"
+          AAB_DIR="frontend/build/app/outputs/bundle/release"
+
+          cp "${APK_DIR}/app-arm64-v8a-release.apk" dist-android/pos-android-arm64-v8a.apk || true
+          cp "${APK_DIR}/app-armeabi-v7a-release.apk" dist-android/pos-android-armeabi-v7a.apk || true
+          cp "${APK_DIR}/app-x86_64-release.apk" dist-android/pos-android-x86_64.apk || true
+          cp "${APK_DIR}/app-release.apk" dist-android/pos-android-universal.apk
+          cp "${AAB_DIR}/app-release.aab" dist-android/pos-android.aab || true
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-artifacts
+          path: dist-android/*
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-backend, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-staging
+
+      - name: Organize release assets & compute checksums
+        run: |
+          mkdir -p release-assets
+          find release-staging -type f -exec cp {} release-assets/ \;
+          cd release-assets
+          sha256sum * > SHA256SUMS.txt
+          ls -la
+
+      - name: Determine Tag Name
+        id: vars
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [ -z "$TAG" ] || [[ "$TAG" != v* ]]; then
+            TAG="${{ inputs.tag_name }}"
+          fi
+          if [ -z "$TAG" ]; then
+            TAG="v1.0.0"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: "Release ${{ steps.vars.outputs.tag }}"
+          prerelease: ${{ inputs.prerelease || false }}
+          generate_release_notes: true
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
