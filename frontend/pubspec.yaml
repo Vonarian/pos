@@ -20,6 +20,8 @@ dependencies:
   uuid: ^4.3.3
   intl: ^0.20.3
   cupertino_icons: ^1.0.6
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
 
   material_ui: ^1.0.0
 dev_dependencies:

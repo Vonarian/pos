@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import '../../data/local/database.dart';
 import '../../data/remote/api_client.dart';
 import '../../data/repositories/offline_routine_repository.dart';
+import '../../data/services/reminder_scheduler_service.dart';
 import '../../domain/models/routine_item.dart';
+import '../../domain/models/window_settings.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -39,6 +41,22 @@ final selectedDateProvider = NotifierProvider<SelectedDateNotifier, String>(
   SelectedDateNotifier.new,
 );
 
+class WindowSettingsNotifier extends Notifier<WindowSettings> {
+  @override
+  WindowSettings build() {
+    return WindowSettings.defaults();
+  }
+
+  void updateSettings(WindowSettings settings) {
+    state = settings;
+  }
+}
+
+final windowSettingsProvider =
+    NotifierProvider<WindowSettingsNotifier, WindowSettings>(
+      WindowSettingsNotifier.new,
+    );
+
 final routinesStreamProvider = StreamProvider.autoDispose<List<RoutineItem>>((
   ref,
 ) {
@@ -72,20 +90,24 @@ class QuadrantState {
       totalCount == 0 ? 0.0 : completedCount / totalCount;
 }
 
-TimeWindow calculateCurrentWindow(DateTime now) {
-  final hour = now.hour;
-  if (hour >= 6 && hour < 12) return TimeWindow.morning;
-  if (hour >= 12 && hour < 18) return TimeWindow.afternoon;
-  if (hour >= 18 && hour < 21) return TimeWindow.evening;
-  return TimeWindow.night;
+TimeWindow calculateCurrentWindow(DateTime now, {WindowSettings? settings}) {
+  final s = settings ?? WindowSettings.defaults();
+  return s.calculateWindow(now);
 }
 
 final quadrantStateProvider = Provider.autoDispose<QuadrantState>((ref) {
   final routinesAsync = ref.watch(routinesStreamProvider);
   final date = ref.watch(selectedDateProvider);
-  final activeWindow = calculateCurrentWindow(DateTime.now());
+  final settings = ref.watch(windowSettingsProvider);
+  final activeWindow = calculateCurrentWindow(
+    DateTime.now(),
+    settings: settings,
+  );
 
   final routines = routinesAsync.value ?? [];
+
+  // Reconcile and synchronize alarms
+  ReminderSchedulerService.syncAll(routines: routines, settings: settings);
 
   final morning = <RoutineItem>[];
   final afternoon = <RoutineItem>[];

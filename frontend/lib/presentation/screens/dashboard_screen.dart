@@ -9,15 +9,17 @@ import '../providers/metric_provider.dart';
 import '../providers/routine_provider.dart';
 import '../widgets/add_routine_sheet.dart';
 import '../widgets/dashboard_adherence_banner.dart';
+import '../widgets/dashboard_date_nav_bar.dart';
 import '../widgets/metric_summary_chart.dart';
 import '../widgets/quadrant_card.dart';
 import '../widgets/sync_app_bar_button.dart';
+import '../widgets/window_settings_sheet.dart';
 import 'home_shell.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
-  AppBar _buildAppBar(BuildContext context) {
+  AppBar _buildAppBar(BuildContext context, WidgetRef ref) {
     return AppBar(
       title: Row(
         children: [
@@ -43,46 +45,20 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      actions: const [SyncAppBarButton()],
-    );
-  }
-
-  Widget _buildDateNavBar(
-    BuildContext context,
-    WidgetRef ref,
-    String date,
-    bool isToday,
-  ) {
-    final parsed = DateTime.parse(date);
-    final dateLabel = isToday
-        ? "Today (${DateFormat('MMM d').format(parsed)})"
-        : DateFormat('EEEE, MMM d').format(parsed);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
+      actions: [
         IconButton(
-          icon: const Icon(Icons.chevron_left_rounded),
+          icon: const Icon(Icons.tune_rounded, size: 20),
+          tooltip: 'Window & Reminder Settings',
           onPressed: () {
-            final prev = parsed.subtract(const Duration(days: 1));
-            ref.read(selectedDateProvider.notifier).setDate(
-                  DateFormat('yyyy-MM-dd').format(prev),
-                );
+            WindowSettingsSheet.show(
+              context,
+              settings: ref.read(windowSettingsProvider),
+              onSave: (s) =>
+                  ref.read(windowSettingsProvider.notifier).updateSettings(s),
+            );
           },
         ),
-        Text(
-          dateLabel,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        IconButton(
-          icon: const Icon(Icons.chevron_right_rounded),
-          onPressed: () {
-            final next = parsed.add(const Duration(days: 1));
-            ref.read(selectedDateProvider.notifier).setDate(
-                  DateFormat('yyyy-MM-dd').format(next),
-                );
-          },
-        ),
+        const SyncAppBarButton(),
       ],
     );
   }
@@ -145,7 +121,7 @@ class DashboardScreen extends ConsumerWidget {
     bool isToday,
   ) {
     return [
-      _buildDateNavBar(context, ref, selectedDate, isToday),
+      DashboardDateNavBar(ref: ref, date: selectedDate, isToday: isToday),
       const SizedBox(height: 12),
       DashboardAdherenceBanner(state: state),
       const SizedBox(height: 18),
@@ -168,7 +144,7 @@ class DashboardScreen extends ConsumerWidget {
         selectedDate == DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     return Scaffold(
-      appBar: _buildAppBar(context),
+      appBar: _buildAppBar(context, ref),
       body: RefreshIndicator(
         onRefresh: () async {
           await repo.syncWithServer();
