@@ -1,7 +1,7 @@
 # Personal Operating System (POS)
 
-[![Backend CI](https://github.com/Vonarian/pos/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Vonarian/pos/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/Vonarian/pos/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Vonarian/pos/actions/workflows/frontend-ci.yml)
+[![CI](https://github.com/Vonarian/pos/actions/workflows/ci.yml/badge.svg)](https://github.com/Vonarian/pos/actions/workflows/ci.yml)
+[![Release](https://github.com/Vonarian/pos/actions/workflows/release.yml/badge.svg)](https://github.com/Vonarian/pos/actions/workflows/release.yml)
 
 > **Local-First, Low-Cognitive-Load Personal Operating System ("Jira for Life")**  
 > Centralizes daily habit execution, medication/supplement adherence, caloric and workout telemetry, and automated Home Assistant integrations.

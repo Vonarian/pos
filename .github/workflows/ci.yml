@@ -1,25 +1,58 @@
-name: Frontend CI
+name: CI
 
 on:
-  push:
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
   pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches-ignore:
+      - main
+      - dev
     paths:
+      - 'backend/**'
       - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+      - '.github/workflows/ci.yml'
 
 concurrency:
-  group: frontend-ci-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  test:
-    name: Analyze & Test Flutter
+  backend-check:
+    name: Backend (Go Test & Vet)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache-dependency-path: backend/go.sum
+
+      - name: Download Go dependencies
+        working-directory: backend
+        run: go mod download
+
+      - name: Run Go Vet
+        working-directory: backend
+        run: go vet ./...
+
+      - name: Run Go Tests with Race Detector
+        working-directory: backend
+        run: go test -v -race ./...
+
+      - name: Verify Build
+        working-directory: backend
+        run: go build -v -o bin/server ./cmd/server
+
+  frontend-check:
+    name: Frontend (Flutter Analyze & Test)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
