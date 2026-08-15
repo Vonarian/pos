@@ -48,7 +48,9 @@ class NativeNotificationService {
   }
 
   static Future<void> initialize() async {
-    tz.initializeTimeZones();
+    try {
+      tz.initializeTimeZones();
+    } catch (_) {}
 
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
@@ -65,13 +67,15 @@ class NativeNotificationService {
       linux: linuxSettings,
     );
 
-    await plugin.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: (response) {
-        notificationTapBackground(response);
-      },
-      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
-    );
+    try {
+      await plugin.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: (response) {
+          notificationTapBackground(response);
+        },
+        onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
+      );
+    } catch (_) {}
   }
 
   static NotificationDetails _buildHabitDetails(int snoozeMinutes) {
@@ -112,25 +116,27 @@ class NativeNotificationService {
     required DateTime scheduledDate,
     required int snoozeMinutes,
   }) async {
-    final id = getNotificationIdForRoutine(routineId);
-    final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
-    final payload = buildPayload(
-      routineId: routineId,
-      title: title,
-      snoozeMinutes: snoozeMinutes,
-    );
+    try {
+      final id = getNotificationIdForRoutine(routineId);
+      final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+      final payload = buildPayload(
+        routineId: routineId,
+        title: title,
+        snoozeMinutes: snoozeMinutes,
+      );
 
-    await plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tzDate,
-      _buildHabitDetails(snoozeMinutes),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-    );
+      await plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tzDate,
+        _buildHabitDetails(snoozeMinutes),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    } catch (_) {}
   }
 
   static Future<void> scheduleSnooze({
@@ -154,33 +160,39 @@ class NativeNotificationService {
     required String body,
     required DateTime scheduledDate,
   }) async {
-    final id = getNotificationIdForWindow(window);
-    final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
-    const android = AndroidNotificationDetails(
-      windowChannelId,
-      windowChannelName,
-      importance: Importance.high,
-      priority: Priority.high,
-      category: AndroidNotificationCategory.reminder,
-    );
+    try {
+      final id = getNotificationIdForWindow(window);
+      final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+      const android = AndroidNotificationDetails(
+        windowChannelId,
+        windowChannelName,
+        importance: Importance.high,
+        priority: Priority.high,
+        category: AndroidNotificationCategory.reminder,
+      );
 
-    await plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tzDate,
-      const NotificationDetails(android: android),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+      await plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tzDate,
+        const NotificationDetails(android: android),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (_) {}
   }
 
   static Future<void> cancelHabitReminder(String routineId) async {
-    await plugin.cancel(getNotificationIdForRoutine(routineId));
+    try {
+      await plugin.cancel(getNotificationIdForRoutine(routineId));
+    } catch (_) {}
   }
 
   static Future<void> cancelWindowNudge(TimeWindow window) async {
-    await plugin.cancel(getNotificationIdForWindow(window));
+    try {
+      await plugin.cancel(getNotificationIdForWindow(window));
+    } catch (_) {}
   }
 }
