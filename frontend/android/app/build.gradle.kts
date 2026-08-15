@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.pos.pos_frontend"
-    compileSdk = 34
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -17,7 +17,7 @@ android {
     defaultConfig {
         applicationId = "com.pos.pos_frontend"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
