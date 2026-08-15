@@ -8,6 +8,7 @@ class RoutineItemMenu extends StatelessWidget {
   final VoidCallback onRevert;
   final VoidCallback onSkip;
   final VoidCallback onDefer;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   const RoutineItemMenu({
@@ -17,11 +18,15 @@ class RoutineItemMenu extends StatelessWidget {
     required this.onRevert,
     required this.onSkip,
     required this.onDefer,
+    this.onEdit,
     this.onDelete,
   });
 
   void _handleSelected(String value) {
     switch (value) {
+      case 'edit':
+        onEdit?.call();
+        break;
       case 'revert':
         onRevert();
         break;
@@ -72,6 +77,13 @@ class RoutineItemMenu extends StatelessWidget {
     bool isMissed,
   ) {
     return [
+      if (onEdit != null)
+        _buildMenuItem(
+          'edit',
+          Icons.edit_outlined,
+          Colors.cyanAccent.shade400,
+          'Edit Habit',
+        ),
       if (isDone || isSkipped || isMissed)
         _buildMenuItem(
           'revert',

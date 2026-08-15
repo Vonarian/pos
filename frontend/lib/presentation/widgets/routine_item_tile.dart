@@ -11,6 +11,7 @@ class RoutineItemTile extends StatefulWidget {
   final VoidCallback onRevert;
   final VoidCallback onSkip;
   final VoidCallback onDefer;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   const RoutineItemTile({
@@ -20,6 +21,7 @@ class RoutineItemTile extends StatefulWidget {
     required this.onRevert,
     required this.onSkip,
     required this.onDefer,
+    this.onEdit,
     this.onDelete,
   });
 
@@ -142,6 +144,7 @@ class _RoutineItemTileState extends State<RoutineItemTile>
                   onRevert: widget.onRevert,
                   onSkip: widget.onSkip,
                   onDefer: widget.onDefer,
+                  onEdit: widget.onEdit,
                   onDelete: widget.onDelete,
                 ),
               ],
