@@ -51,10 +51,12 @@ void main() {
           offlineMetricRepositoryProvider.overrideWithValue(
             OfflineMetricRepository(db: db, apiClient: null),
           ),
-          dailyMetricSummaryProvider.overrideWith((ref) async => <String, double>{
-                'STEPS': 5000,
-                'CALORIES_BURNED': 1200,
-              }),
+          dailyMetricSummaryProvider.overrideWith(
+            (ref) async => <String, double>{
+              'STEPS': 5000,
+              'CALORIES_BURNED': 1200,
+            },
+          ),
         ],
         child: const MaterialApp(home: DashboardScreen()),
       ),
@@ -110,7 +112,9 @@ void main() {
           offlineMetricRepositoryProvider.overrideWithValue(
             OfflineMetricRepository(db: db, apiClient: null),
           ),
-          dailyMetricSummaryProvider.overrideWith((ref) async => <String, double>{}),
+          dailyMetricSummaryProvider.overrideWith(
+            (ref) async => <String, double>{},
+          ),
         ],
         child: const MaterialApp(home: DashboardScreen()),
       ),
@@ -135,55 +139,57 @@ void main() {
     await db.close();
   });
 
-  testWidgets('Sync button animates in-place and shows checkmark without SnackBar', (
-    WidgetTester tester,
-  ) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() => tester.view.resetPhysicalSize());
+  testWidgets(
+    'Sync button animates in-place and shows checkmark without SnackBar',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
-    final db = AppDatabase(NativeDatabase.memory());
+      final db = AppDatabase(NativeDatabase.memory());
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          databaseProvider.overrideWithValue(db),
-          offlineRoutineRepositoryProvider.overrideWithValue(
-            OfflineRoutineRepository(db: db, apiClient: null),
-          ),
-          offlineMetricRepositoryProvider.overrideWithValue(
-            OfflineMetricRepository(db: db, apiClient: null),
-          ),
-          dailyMetricSummaryProvider.overrideWith((ref) async => <String, double>{}),
-        ],
-        child: const MaterialApp(home: DashboardScreen()),
-      ),
-    );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+            offlineRoutineRepositoryProvider.overrideWithValue(
+              OfflineRoutineRepository(db: db, apiClient: null),
+            ),
+            offlineMetricRepositoryProvider.overrideWithValue(
+              OfflineMetricRepository(db: db, apiClient: null),
+            ),
+            dailyMetricSummaryProvider.overrideWith(
+              (ref) async => <String, double>{},
+            ),
+          ],
+          child: const MaterialApp(home: DashboardScreen()),
+        ),
+      );
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    // Verify initial sync button is present
-    final syncButton = find.byTooltip('Sync now');
-    expect(syncButton, findsOneWidget);
+      // Verify initial sync button is present
+      final syncButton = find.byTooltip('Sync now');
+      expect(syncButton, findsOneWidget);
 
-    // Tap sync button
-    await tester.tap(syncButton);
-    await tester.pump();
+      // Tap sync button
+      await tester.tap(syncButton);
+      await tester.pump();
 
-    // Verify checkmark appears after sync completes
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+      // Verify checkmark appears after sync completes
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
 
-    // Verify NO SnackBar is displayed
-    expect(find.byType(SnackBar), findsNothing);
-    expect(find.text('Synchronized with Go backend'), findsNothing);
+      // Verify NO SnackBar is displayed
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.text('Synchronized with Go backend'), findsNothing);
 
-    // After 1.2s checkmark disappears and sync icon returns
-    await tester.pump(const Duration(milliseconds: 1300));
-    expect(find.byIcon(Icons.check_rounded), findsNothing);
-    expect(find.byIcon(Icons.sync_rounded), findsOneWidget);
+      // After 1.2s checkmark disappears and sync icon returns
+      await tester.pump(const Duration(milliseconds: 1300));
+      expect(find.byIcon(Icons.check_rounded), findsNothing);
+      expect(find.byIcon(Icons.sync_rounded), findsOneWidget);
 
-    await db.close();
-  });
+      await db.close();
+    },
+  );
 }
-

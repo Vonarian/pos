@@ -44,23 +44,19 @@ class AnalyticsChartBuilder {
       isStrokeCapRound: true,
       dotData: FlDotData(
         show: days <= 14,
-        getDotPainter:
-            (spot, percent, barData, index) => FlDotCirclePainter(
-              radius: 3.5,
-              color: color,
-              strokeWidth: 1.5,
-              strokeColor: const Color(0xFF141C2B),
-            ),
+        getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+          radius: 3.5,
+          color: color,
+          strokeWidth: 1.5,
+          strokeColor: const Color(0xFF141C2B),
+        ),
       ),
       belowBarData: BarAreaData(
         show: true,
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            color.withValues(alpha: 0.35),
-            color.withValues(alpha: 0.0),
-          ],
+          colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0.0)],
         ),
       ),
     );

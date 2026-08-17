@@ -56,10 +56,9 @@ class QuadrantCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color:
-                isActive
-                    ? theme.colorScheme.primary.withValues(alpha: 0.15)
-                    : Colors.grey.withValues(alpha: 0.1),
+            color: isActive
+                ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -104,10 +103,9 @@ class QuadrantCard extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color:
-                completed == total && total > 0
-                    ? Colors.teal
-                    : Colors.grey.shade400,
+            color: completed == total && total > 0
+                ? Colors.teal
+                : Colors.grey.shade400,
           ),
         ),
       ],
@@ -116,8 +114,9 @@ class QuadrantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completed =
-        items.where((i) => i.status == ItemStatus.completed).length;
+    final completed = items
+        .where((i) => i.status == ItemStatus.completed)
+        .length;
     final total = items.length;
     final progress = total == 0 ? 1.0 : completed / total;
     final theme = Theme.of(context);
@@ -128,22 +127,20 @@ class QuadrantCard extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color:
-              isActive
-                  ? theme.colorScheme.primary.withValues(alpha: 0.6)
-                  : theme.dividerColor.withValues(alpha: 0.2),
+          color: isActive
+              ? theme.colorScheme.primary.withValues(alpha: 0.6)
+              : theme.dividerColor.withValues(alpha: 0.2),
           width: isActive ? 2.0 : 1.0,
         ),
-        boxShadow:
-            isActive
-                ? [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-                : null,
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),

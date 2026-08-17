@@ -47,7 +47,9 @@ class HealthConnectChannel {
   static Future<Map<String, double>> getTodayMetrics() async {
     if (!_isAndroid) return {};
     try {
-      final res = await _channel.invokeMapMethod<String, dynamic>('getTodayMetrics');
+      final res = await _channel.invokeMapMethod<String, dynamic>(
+        'getTodayMetrics',
+      );
       if (res == null) return {};
       final map = <String, double>{};
       final nutrition = (res['nutritionCalories'] as num?)?.toDouble() ?? 0.0;
@@ -81,79 +83,102 @@ class HealthConnectChannel {
 
       for (final raw in list) {
         final item = Map<String, dynamic>.from(raw);
-        final dateStr = item['date'] as String? ?? DateFormat('yyyy-MM-dd').format(now);
+        final dateStr =
+            item['date'] as String? ?? DateFormat('yyyy-MM-dd').format(now);
         final parsedDate = DateTime.tryParse(dateStr) ?? now;
-        final startOfDay = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
-        final endOfDay = DateTime(parsedDate.year, parsedDate.month, parsedDate.day, 23, 59, 59);
+        final startOfDay = DateTime(
+          parsedDate.year,
+          parsedDate.month,
+          parsedDate.day,
+        );
+        final endOfDay = DateTime(
+          parsedDate.year,
+          parsedDate.month,
+          parsedDate.day,
+          23,
+          59,
+          59,
+        );
 
         final steps = (item['steps'] as num?)?.toDouble() ?? 0.0;
         if (steps > 0) {
-          points.add(HealthDataPoint(
-            id: 'hc-steps-$dateStr',
-            source: 'health_connect',
-            metric: MetricType.steps,
-            value: steps,
-            unit: 'count',
-            startTime: startOfDay,
-            endTime: endOfDay,
-            syncedAt: now,
-          ));
+          points.add(
+            HealthDataPoint(
+              id: 'hc-steps-$dateStr',
+              source: 'health_connect',
+              metric: MetricType.steps,
+              value: steps,
+              unit: 'count',
+              startTime: startOfDay,
+              endTime: endOfDay,
+              syncedAt: now,
+            ),
+          );
         }
 
-        final nutrition = (item['nutritionCalories'] as num?)?.toDouble() ?? 0.0;
+        final nutrition =
+            (item['nutritionCalories'] as num?)?.toDouble() ?? 0.0;
         if (nutrition > 0) {
-          points.add(HealthDataPoint(
-            id: 'hc-food-$dateStr',
-            source: 'health_connect',
-            metric: MetricType.caloriesConsumed,
-            value: nutrition,
-            unit: 'kcal',
-            startTime: startOfDay,
-            endTime: endOfDay,
-            syncedAt: now,
-          ));
+          points.add(
+            HealthDataPoint(
+              id: 'hc-food-$dateStr',
+              source: 'health_connect',
+              metric: MetricType.caloriesConsumed,
+              value: nutrition,
+              unit: 'kcal',
+              startTime: startOfDay,
+              endTime: endOfDay,
+              syncedAt: now,
+            ),
+          );
         }
 
         final burned = (item['burnedCalories'] as num?)?.toDouble() ?? 0.0;
         if (burned > 0) {
-          points.add(HealthDataPoint(
-            id: 'hc-burn-$dateStr',
-            source: 'health_connect',
-            metric: MetricType.caloriesBurned,
-            value: burned,
-            unit: 'kcal',
-            startTime: startOfDay,
-            endTime: endOfDay,
-            syncedAt: now,
-          ));
+          points.add(
+            HealthDataPoint(
+              id: 'hc-burn-$dateStr',
+              source: 'health_connect',
+              metric: MetricType.caloriesBurned,
+              value: burned,
+              unit: 'kcal',
+              startTime: startOfDay,
+              endTime: endOfDay,
+              syncedAt: now,
+            ),
+          );
         }
 
         final sleepMin = (item['sleepMinutes'] as num?)?.toDouble() ?? 0.0;
         if (sleepMin > 0) {
-          points.add(HealthDataPoint(
-            id: 'hc-sleep-$dateStr',
-            source: 'health_connect',
-            metric: MetricType.sleepDuration,
-            value: sleepMin,
-            unit: 'minutes',
-            startTime: startOfDay,
-            endTime: endOfDay,
-            syncedAt: now,
-          ));
+          points.add(
+            HealthDataPoint(
+              id: 'hc-sleep-$dateStr',
+              source: 'health_connect',
+              metric: MetricType.sleepDuration,
+              value: sleepMin,
+              unit: 'minutes',
+              startTime: startOfDay,
+              endTime: endOfDay,
+              syncedAt: now,
+            ),
+          );
         }
 
         final weight = (item['weightKg'] as num?)?.toDouble() ?? 0.0;
         if (weight > 0) {
-          points.add(HealthDataPoint(
-            id: 'hc-weight-$dateStr',
-            source: 'health_connect',
-            metric: MetricType.weight,
-            value: weight,
-            unit: 'kg',
-            startTime: startOfDay,
-            endTime: endOfDay,
-            syncedAt: now,
-          ));
+          points.add(
+            HealthDataPoint(
+              id: 'hc-weight-$dateStr',
+              source: 'health_connect',
+              metric: MetricType.weight,
+              value: weight,
+              unit: 'kg',
+              startTime: startOfDay,
+              endTime: endOfDay,
+              syncedAt: now,
+            ),
+          );
         }
       }
 

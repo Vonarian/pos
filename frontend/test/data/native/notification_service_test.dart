@@ -21,23 +21,30 @@ void main() {
       expect(NativeNotificationService.actionSkip, 'ACTION_SKIP');
     });
 
-    test('getNotificationIdForRoutine generates stable non-negative 32-bit int', () {
-      const id1 = '01914ec7-4402-7c9e-9d22-8d76dfb4c2b9';
-      const id2 = '01914ec7-4402-7c9e-9d22-8d76dfb4c2b0';
+    test(
+      'getNotificationIdForRoutine generates stable non-negative 32-bit int',
+      () {
+        const id1 = '01914ec7-4402-7c9e-9d22-8d76dfb4c2b9';
+        const id2 = '01914ec7-4402-7c9e-9d22-8d76dfb4c2b0';
 
-      final hash1 = NativeNotificationService.getNotificationIdForRoutine(id1);
-      final hash2 = NativeNotificationService.getNotificationIdForRoutine(id2);
+        final hash1 = NativeNotificationService.getNotificationIdForRoutine(
+          id1,
+        );
+        final hash2 = NativeNotificationService.getNotificationIdForRoutine(
+          id2,
+        );
 
-      expect(hash1, isNonNegative);
-      expect(hash2, isNonNegative);
-      expect(hash1, isNot(equals(hash2)));
+        expect(hash1, isNonNegative);
+        expect(hash2, isNonNegative);
+        expect(hash1, isNot(equals(hash2)));
 
-      // Stable
-      expect(
-        NativeNotificationService.getNotificationIdForRoutine(id1),
-        equals(hash1),
-      );
-    });
+        // Stable
+        expect(
+          NativeNotificationService.getNotificationIdForRoutine(id1),
+          equals(hash1),
+        );
+      },
+    );
 
     test('getNotificationIdForWindow is distinct for each time window', () {
       final morning = NativeNotificationService.getNotificationIdForWindow(

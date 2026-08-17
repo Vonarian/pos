@@ -21,9 +21,8 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.12),
+              color: Theme.of(context).colorScheme.primary
+                  .withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -47,11 +46,8 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
             WindowSettingsSheet.show(
               context,
               settings: ref.read(windowSettingsProvider),
-              onSave:
-                  (s) =>
-                      ref
-                          .read(windowSettingsProvider.notifier)
-                          .updateSettings(s),
+              onSave: (s) =>
+                  ref.read(windowSettingsProvider.notifier).updateSettings(s),
             );
           },
         ),

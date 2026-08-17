@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../domain/models/window_settings.dart';
 
 class WindowSettingsSheet extends StatefulWidget {
@@ -22,14 +23,13 @@ class WindowSettingsSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (ctx) => WindowSettingsSheet(
-            initialSettings: settings,
-            onSave: (val) {
-              onSave(val);
-              Navigator.pop(ctx);
-            },
-          ),
+      builder: (ctx) => WindowSettingsSheet(
+        initialSettings: settings,
+        onSave: (val) {
+          onSave(val);
+          Navigator.pop(ctx);
+        },
+      ),
     );
   }
 
@@ -68,14 +68,13 @@ class _WindowSettingsSheetState extends State<WindowSettingsSheet> {
     const options = [15, 30, 45, 60];
     return Wrap(
       spacing: 8,
-      children:
-          options.map((m) {
-            return ChoiceChip(
-              label: Text('${m}m before'),
-              selected: _nudgeLeadMinutes == m,
-              onSelected: (_) => setState(() => _nudgeLeadMinutes = m),
-            );
-          }).toList(),
+      children: options.map((m) {
+        return ChoiceChip(
+          label: Text('${m}m before'),
+          selected: _nudgeLeadMinutes == m,
+          onSelected: (_) => setState(() => _nudgeLeadMinutes = m),
+        );
+      }).toList(),
     );
   }
 

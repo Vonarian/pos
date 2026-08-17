@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../domain/models/routine_item.dart';
 
 class EditRoutineDropdowns extends StatelessWidget {
@@ -23,15 +24,14 @@ class EditRoutineDropdowns extends StatelessWidget {
       children: [
         Expanded(
           child: DropdownButtonFormField<String>(
-            value: category,
+            initialValue: category,
             decoration: const InputDecoration(
               labelText: 'Category',
               border: OutlineInputBorder(),
             ),
-            items:
-                categories
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
+            items: categories
+                .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                .toList(),
             onChanged: (v) {
               if (v != null) onCategoryChanged(v);
             },
@@ -40,22 +40,19 @@ class EditRoutineDropdowns extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: DropdownButtonFormField<TimeWindow>(
-            value: window,
+            initialValue: window,
             decoration: const InputDecoration(
               labelText: 'Time Window',
               border: OutlineInputBorder(),
             ),
-            items:
-                TimeWindow.values
-                    .map(
-                      (w) => DropdownMenuItem(
-                        value: w,
-                        child: Text(
-                          w.name[0].toUpperCase() + w.name.substring(1),
-                        ),
-                      ),
-                    )
-                    .toList(),
+            items: TimeWindow.values
+                .map(
+                  (w) => DropdownMenuItem(
+                    value: w,
+                    child: Text(w.name[0].toUpperCase() + w.name.substring(1)),
+                  ),
+                )
+                .toList(),
             onChanged: (v) {
               if (v != null) onWindowChanged(v);
             },

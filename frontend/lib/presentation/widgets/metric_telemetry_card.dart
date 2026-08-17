@@ -32,9 +32,7 @@ class MetricTelemetryCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF141C2B),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: const Color(0xFF1E293B),
-            ),
+            border: Border.all(color: const Color(0xFF1E293B)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

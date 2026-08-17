@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../local/database.dart';
@@ -71,7 +72,10 @@ class OfflineRoutineRepository {
     }
   }
 
-  Future<void> updateRoutine(RoutineItem item, {bool applyToFuture = true}) async {
+  Future<void> updateRoutine(
+    RoutineItem item, {
+    bool applyToFuture = true,
+  }) async {
     final existing = await db.routineDao.getRoutineById(item.id);
     final effectiveTemplateId =
         item.templateId ?? existing?.templateId ?? 'tpl_${item.id}';
@@ -81,11 +85,10 @@ class OfflineRoutineRepository {
       OfflineRoutineMapper.mapDomainToCompanion(itemToSave, isSynced: false),
     );
 
-    if (applyToFuture && effectiveTemplateId != null) {
-      final days =
-          (item.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
-              ? item.reminderConfig!.daysOfWeek
-              : const [1, 2, 3, 4, 5, 6, 7];
+    if (applyToFuture) {
+      final days = (item.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
+          ? item.reminderConfig!.daysOfWeek
+          : const [1, 2, 3, 4, 5, 6, 7];
 
       await db.routineTemplateDao.upsertTemplate(
         RoutineTemplatesTableCompanion.insert(
@@ -150,10 +153,9 @@ class OfflineRoutineRepository {
 
   Future<void> createRoutine(RoutineItem item) async {
     final templateId = item.templateId ?? 'tpl_${item.id}';
-    final days =
-        (item.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
-            ? item.reminderConfig!.daysOfWeek
-            : const [1, 2, 3, 4, 5, 6, 7];
+    final days = (item.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
+        ? item.reminderConfig!.daysOfWeek
+        : const [1, 2, 3, 4, 5, 6, 7];
 
     await db.routineTemplateDao.upsertTemplate(
       RoutineTemplatesTableCompanion.insert(

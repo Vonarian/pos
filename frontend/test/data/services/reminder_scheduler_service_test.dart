@@ -101,10 +101,7 @@ void main() {
       );
 
       expect(
-        ReminderSchedulerService.calculateReminderTrigger(
-          item: item,
-          now: now,
-        ),
+        ReminderSchedulerService.calculateReminderTrigger(item: item, now: now),
         isNull,
       );
     });

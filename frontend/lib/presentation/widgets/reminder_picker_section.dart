@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../domain/models/reminder_config.dart';
 
 class ReminderPickerSection extends StatelessWidget {
@@ -54,25 +55,24 @@ class ReminderPickerSection extends StatelessWidget {
 
     return Wrap(
       spacing: 4,
-      children:
-          days.map((d) {
-            final val = d['val'] as int;
-            final isSelected = config.daysOfWeek.contains(val);
-            return FilterChip(
-              label: Text(d['label'] as String),
-              selected: isSelected,
-              onSelected: (selected) {
-                final list = List<int>.from(config.daysOfWeek);
-                if (selected) {
-                  list.add(val);
-                } else {
-                  list.remove(val);
-                }
-                list.sort();
-                onChanged(config.copyWith(daysOfWeek: list));
-              },
-            );
-          }).toList(),
+      children: days.map((d) {
+        final val = d['val'] as int;
+        final isSelected = config.daysOfWeek.contains(val);
+        return FilterChip(
+          label: Text(d['label'] as String),
+          selected: isSelected,
+          onSelected: (selected) {
+            final list = List<int>.from(config.daysOfWeek);
+            if (selected) {
+              list.add(val);
+            } else {
+              list.remove(val);
+            }
+            list.sort();
+            onChanged(config.copyWith(daysOfWeek: list));
+          },
+        );
+      }).toList(),
     );
   }
 
@@ -91,8 +91,8 @@ class ReminderPickerSection extends StatelessWidget {
               config.daysOfWeek.length == 5 &&
               !config.daysOfWeek.contains(6) &&
               !config.daysOfWeek.contains(7),
-          onSelected:
-              (_) => onChanged(config.copyWith(daysOfWeek: [1, 2, 3, 4, 5])),
+          onSelected: (_) =>
+              onChanged(config.copyWith(daysOfWeek: [1, 2, 3, 4, 5])),
         ),
       ],
     );

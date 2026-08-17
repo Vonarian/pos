@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pos_frontend/domain/models/reminder_config.dart';
 import 'package:pos_frontend/domain/models/routine_item.dart';
 import 'package:pos_frontend/presentation/widgets/edit_routine_sheet.dart';
 

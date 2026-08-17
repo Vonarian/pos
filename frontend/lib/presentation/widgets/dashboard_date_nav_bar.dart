@@ -19,10 +19,9 @@ class DashboardDateNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final parsed = DateTime.parse(date);
-    final dateLabel =
-        isToday
-            ? "Today (${DateFormat('MMM d').format(parsed)})"
-            : DateFormat('EEEE, MMM d').format(parsed);
+    final dateLabel = isToday
+        ? "Today (${DateFormat('MMM d').format(parsed)})"
+        : DateFormat('EEEE, MMM d').format(parsed);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

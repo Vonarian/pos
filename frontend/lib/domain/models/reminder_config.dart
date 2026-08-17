@@ -31,10 +31,9 @@ class ReminderConfig {
               .toList() ??
           const [],
       snoozeMinutes: json['snooze_minutes'] as int? ?? 15,
-      lastSnoozedUntil:
-          json['last_snoozed_until'] != null
-              ? DateTime.parse(json['last_snoozed_until'] as String)
-              : null,
+      lastSnoozedUntil: json['last_snoozed_until'] != null
+          ? DateTime.parse(json['last_snoozed_until'] as String)
+          : null,
     );
   }
 

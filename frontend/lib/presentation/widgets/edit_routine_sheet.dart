@@ -10,11 +10,7 @@ class EditRoutineSheet extends StatefulWidget {
   final RoutineItem item;
   final Function(RoutineItem updatedItem, bool applyToFuture) onSave;
 
-  const EditRoutineSheet({
-    super.key,
-    required this.item,
-    required this.onSave,
-  });
+  const EditRoutineSheet({super.key, required this.item, required this.onSave});
 
   @override
   State<EditRoutineSheet> createState() => _EditRoutineSheetState();
@@ -45,10 +41,9 @@ class _EditRoutineSheetState extends State<EditRoutineSheet> {
     _dosageController = TextEditingController(
       text: widget.item.metadata['dosage']?.toString() ?? '',
     );
-    _category =
-        _categories.contains(widget.item.category)
-            ? widget.item.category
-            : _categories.first;
+    _category = _categories.contains(widget.item.category)
+        ? widget.item.category
+        : _categories.first;
     _window = widget.item.timeWindow;
     _reminder = widget.item.reminderConfig ?? const ReminderConfig();
   }

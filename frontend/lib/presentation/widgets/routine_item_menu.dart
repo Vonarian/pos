@@ -130,11 +130,7 @@ class RoutineItemMenu extends StatelessWidget {
     final isMissed = item.status == ItemStatus.missed;
 
     return PopupMenuButton<String>(
-      icon: const Icon(
-        Icons.more_vert_rounded,
-        size: 20,
-        color: Colors.grey,
-      ),
+      icon: const Icon(Icons.more_vert_rounded, size: 20, color: Colors.grey),
       onSelected: _handleSelected,
       itemBuilder: (context) => _buildItems(isDone, isSkipped, isMissed),
     );

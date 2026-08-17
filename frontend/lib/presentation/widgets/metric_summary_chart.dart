@@ -36,11 +36,17 @@ class MetricSummaryChart extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF141C2B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.health_and_safety_rounded, color: theme.colorScheme.primary, size: 24),
+          Icon(
+            Icons.health_and_safety_rounded,
+            color: theme.colorScheme.primary,
+            size: 24,
+          ),
           const SizedBox(width: 14),
           const Expanded(
             child: Text(
@@ -50,7 +56,10 @@ class MetricSummaryChart extends StatelessWidget {
           ),
           FilledButton.tonal(
             onPressed: onConnect,
-            child: const Text('Grant Access', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Grant Access',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -63,14 +72,22 @@ class MetricSummaryChart extends StatelessWidget {
       children: [
         const Text(
           'Health Telemetry',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFF8FAFC)),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFF8FAFC),
+          ),
         ),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (onRefresh != null && isConnected) ...[
               IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 18, color: Color(0xFF94A3B8)),
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  size: 18,
+                  color: Color(0xFF94A3B8),
+                ),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 tooltip: 'Refresh Health Connect',
@@ -79,7 +96,9 @@ class MetricSummaryChart extends StatelessWidget {
               const SizedBox(width: 8),
             ],
             Icon(
-              isConnected ? Icons.check_circle_outline_rounded : Icons.sync_problem_rounded,
+              isConnected
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.sync_problem_rounded,
               size: 14,
               color: isConnected ? Colors.tealAccent : Colors.amberAccent,
             ),
@@ -89,7 +108,9 @@ class MetricSummaryChart extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isConnected ? const Color(0xFF94A3B8) : Colors.amberAccent,
+                color: isConnected
+                    ? const Color(0xFF94A3B8)
+                    : Colors.amberAccent,
               ),
             ),
           ],
@@ -117,7 +138,9 @@ class MetricSummaryChart extends StatelessWidget {
                 progress: (steps / 10000.0).clamp(0.0, 1.0),
                 icon: Icons.directions_walk_rounded,
                 color: Colors.cyanAccent.shade400,
-                onTap: onMetricTap != null ? () => onMetricTap!(MetricType.steps) : null,
+                onTap: onMetricTap != null
+                    ? () => onMetricTap!(MetricType.steps)
+                    : null,
               ),
             ),
             const SizedBox(width: 8),
@@ -129,7 +152,9 @@ class MetricSummaryChart extends StatelessWidget {
                 progress: (sleepMin / 480.0).clamp(0.0, 1.0),
                 icon: Icons.bedtime_rounded,
                 color: Colors.purpleAccent.shade100,
-                onTap: onMetricTap != null ? () => onMetricTap!(MetricType.sleepDuration) : null,
+                onTap: onMetricTap != null
+                    ? () => onMetricTap!(MetricType.sleepDuration)
+                    : null,
               ),
             ),
           ],
@@ -145,7 +170,9 @@ class MetricSummaryChart extends StatelessWidget {
                 progress: (food / 2400.0).clamp(0.0, 1.0),
                 icon: Icons.restaurant_rounded,
                 color: Colors.amberAccent.shade400,
-                onTap: onMetricTap != null ? () => onMetricTap!(MetricType.caloriesConsumed) : null,
+                onTap: onMetricTap != null
+                    ? () => onMetricTap!(MetricType.caloriesConsumed)
+                    : null,
               ),
             ),
             const SizedBox(width: 8),
@@ -157,7 +184,9 @@ class MetricSummaryChart extends StatelessWidget {
                 progress: (burned / 500.0).clamp(0.0, 1.0),
                 icon: Icons.local_fire_department_rounded,
                 color: Colors.deepOrangeAccent.shade200,
-                onTap: onMetricTap != null ? () => onMetricTap!(MetricType.caloriesBurned) : null,
+                onTap: onMetricTap != null
+                    ? () => onMetricTap!(MetricType.caloriesBurned)
+                    : null,
               ),
             ),
           ],
@@ -173,7 +202,9 @@ class MetricSummaryChart extends StatelessWidget {
                 progress: 1.0,
                 icon: Icons.monitor_weight_rounded,
                 color: Colors.tealAccent.shade400,
-                onTap: onMetricTap != null ? () => onMetricTap!(MetricType.weight) : null,
+                onTap: onMetricTap != null
+                    ? () => onMetricTap!(MetricType.weight)
+                    : null,
               ),
             ),
           ],

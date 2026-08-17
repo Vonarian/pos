@@ -31,13 +31,11 @@ class DashboardScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (ctx) => EditRoutineSheet(
-            item: item,
-            onSave:
-                (updated, applyToFuture) =>
-                    repo.updateRoutine(updated, applyToFuture: applyToFuture),
-          ),
+      builder: (ctx) => EditRoutineSheet(
+        item: item,
+        onSave: (updated, applyToFuture) =>
+            repo.updateRoutine(updated, applyToFuture: applyToFuture),
+      ),
     );
   }
 
@@ -70,23 +68,22 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildMetricsSection(BuildContext context, WidgetRef ref) {
     final metricsAsync = ref.watch(dailyMetricSummaryProvider);
     return metricsAsync.when(
-      data:
-          (metrics) => MetricSummaryChart(
-            metrics: metrics,
-            isConnected: ref.watch(healthConnectStatusProvider).value ?? false,
-            onConnect: () async {
-              final granted = await HealthConnectChannel.requestPermissions();
-              if (granted) {
-                ref.invalidate(healthConnectStatusProvider);
-                ref.invalidate(dailyMetricSummaryProvider);
-              }
-            },
-            onRefresh: () => ref.invalidate(dailyMetricSummaryProvider),
-            onMetricTap: (metric) {
-              ref.read(selectedMetricTypeProvider.notifier).select(metric);
-              ref.read(currentTabProvider.notifier).select(1);
-            },
-          ),
+      data: (metrics) => MetricSummaryChart(
+        metrics: metrics,
+        isConnected: ref.watch(healthConnectStatusProvider).value ?? false,
+        onConnect: () async {
+          final granted = await HealthConnectChannel.requestPermissions();
+          if (granted) {
+            ref.invalidate(healthConnectStatusProvider);
+            ref.invalidate(dailyMetricSummaryProvider);
+          }
+        },
+        onRefresh: () => ref.invalidate(dailyMetricSummaryProvider),
+        onMetricTap: (metric) {
+          ref.read(selectedMetricTypeProvider.notifier).select(metric);
+          ref.read(currentTabProvider.notifier).select(1);
+        },
+      ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, _) => const SizedBox.shrink(),
     );

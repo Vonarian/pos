@@ -32,7 +32,7 @@ class EditRoutineScopeCard extends StatelessWidget {
             style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
           ),
           value: applyToFuture,
-          activeColor: Colors.tealAccent.shade400,
+          activeThumbColor: Colors.tealAccent.shade400,
           onChanged: onChanged,
         ),
       ),

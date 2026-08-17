@@ -73,28 +73,25 @@ class AnalyticsChartCard extends StatelessWidget {
       LineChartData(
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipItems:
-                (touched) =>
-                    touched
-                        .map(
-                          (s) => LineTooltipItem(
-                            _formatValue(s.y),
-                            const TextStyle(
-                              color: Color(0xFFF8FAFC),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        )
-                        .toList(),
+            getTooltipItems: (touched) => touched
+                .map(
+                  (s) => LineTooltipItem(
+                    _formatValue(s.y),
+                    const TextStyle(
+                      color: Color(0xFFF8FAFC),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                )
+                .toList(),
           ),
         ),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          getDrawingHorizontalLine:
-              (value) =>
-                  const FlLine(color: Color(0xFF1E293B), strokeWidth: 1),
+          getDrawingHorizontalLine: (value) =>
+              const FlLine(color: Color(0xFF1E293B), strokeWidth: 1),
         ),
         titlesData: AnalyticsChartBuilder.buildTitlesData(days, entries),
         borderData: FlBorderData(show: false),
@@ -102,9 +99,7 @@ class AnalyticsChartCard extends StatelessWidget {
         maxX: (days - 1).toDouble(),
         minY: 0,
         maxY: maxVal * 1.25,
-        lineBarsData: [
-          AnalyticsChartBuilder.buildBarData(days, spots, color),
-        ],
+        lineBarsData: [AnalyticsChartBuilder.buildBarData(days, spots, color)],
       ),
     );
   }
@@ -115,10 +110,11 @@ class AnalyticsChartCard extends StatelessWidget {
     final dailyValues = <DateTime, double>{};
     for (int i = days - 1; i >= 0; i--) {
       dailyValues[DateTime(
-        now.year,
-        now.month,
-        now.day,
-      ).subtract(Duration(days: i))] = 0.0;
+            now.year,
+            now.month,
+            now.day,
+          ).subtract(Duration(days: i))] =
+          0.0;
     }
     for (final p in points) {
       final pDate = DateTime(
@@ -169,10 +165,7 @@ class AnalyticsChartCard extends StatelessWidget {
             avgColor: _getMetricColor(),
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            height: 190,
-            child: _buildLineChart(spots, maxVal, entries),
-          ),
+          SizedBox(height: 190, child: _buildLineChart(spots, maxVal, entries)),
         ],
       ),
     );

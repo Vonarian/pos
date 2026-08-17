@@ -74,18 +74,18 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
-        },
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.createTable(routineTemplatesTable);
-            try {
-              await m.addColumn(routineItemsTable, routineItemsTable.templateId);
-            } catch (_) {}
-          }
-        },
-      );
+    onCreate: (m) async {
+      await m.createAll();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(routineTemplatesTable);
+        try {
+          await m.addColumn(routineItemsTable, routineItemsTable.templateId);
+        } catch (_) {}
+      }
+    },
+  );
 }
 
 LazyDatabase _openConnection() {

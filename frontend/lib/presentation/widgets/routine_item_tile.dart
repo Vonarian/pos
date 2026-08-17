@@ -76,12 +76,11 @@ class _RoutineItemTileState extends State<RoutineItemTile>
   }
 
   Widget _buildCheckmark(bool isDone, bool isSkipped) {
-    final iconData =
-        isDone
-            ? Icons.check_circle_rounded
-            : isSkipped
-            ? Icons.remove_circle_outline_rounded
-            : Icons.radio_button_unchecked_rounded;
+    final iconData = isDone
+        ? Icons.check_circle_rounded
+        : isSkipped
+        ? Icons.remove_circle_outline_rounded
+        : Icons.radio_button_unchecked_rounded;
     final iconColor = isDone ? Colors.teal : Colors.grey.shade400;
 
     return ScaleTransition(
@@ -114,10 +113,9 @@ class _RoutineItemTileState extends State<RoutineItemTile>
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color:
-              isDone
-                  ? Colors.teal.withValues(alpha: 0.3)
-                  : Theme.of(context).dividerColor.withValues(alpha: 0.2),
+          color: isDone
+              ? Colors.teal.withValues(alpha: 0.3)
+              : Theme.of(context).dividerColor.withValues(alpha: 0.2),
         ),
       ),
       child: Material(

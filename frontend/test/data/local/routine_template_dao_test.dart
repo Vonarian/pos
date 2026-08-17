@@ -31,7 +31,11 @@ void main() {
         metadataJson: Value(
           jsonEncode({
             'dosage': '5g',
-            'reminder': {'enabled': true, 'time': '08:00', 'days': [1, 2, 3, 4, 5, 6, 7]},
+            'reminder': {
+              'enabled': true,
+              'time': '08:00',
+              'days': [1, 2, 3, 4, 5, 6, 7],
+            },
           }),
         ),
         isActive: const Value(true),

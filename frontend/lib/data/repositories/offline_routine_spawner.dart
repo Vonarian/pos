@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../local/database.dart';
@@ -22,10 +23,9 @@ class OfflineRoutineSpawner {
         final tplId = r.templateId ?? 'tpl_${r.id}';
         if (!activeTemplateIds.contains(tplId)) {
           final domain = OfflineRoutineMapper.mapRowToDomain(r);
-          final days =
-              (domain.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
-                  ? domain.reminderConfig!.daysOfWeek
-                  : const [1, 2, 3, 4, 5, 6, 7];
+          final days = (domain.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
+              ? domain.reminderConfig!.daysOfWeek
+              : const [1, 2, 3, 4, 5, 6, 7];
 
           await db.routineTemplateDao.upsertTemplate(
             RoutineTemplatesTableCompanion.insert(
@@ -55,11 +55,10 @@ class OfflineRoutineSpawner {
       if (freshTemplates.isEmpty) return;
 
       final existingRows = await db.routineDao.getRoutinesForDate(dateStr);
-      final existingTemplateIds =
-          existingRows
-              .map((r) => r.templateId)
-              .where((id) => id != null)
-              .toSet();
+      final existingTemplateIds = existingRows
+          .map((r) => r.templateId)
+          .where((id) => id != null)
+          .toSet();
 
       final companionsToInsert = <RoutineItemsTableCompanion>[];
       final now = DateTime.now();
@@ -67,10 +66,9 @@ class OfflineRoutineSpawner {
       for (final tpl in freshTemplates) {
         List<int> days = const [1, 2, 3, 4, 5, 6, 7];
         try {
-          days =
-              (jsonDecode(tpl.daysOfWeekJson) as List)
-                  .map((e) => e as int)
-                  .toList();
+          days = (jsonDecode(tpl.daysOfWeekJson) as List)
+              .map((e) => e as int)
+              .toList();
         } catch (_) {}
 
         if (days.contains(weekday) && !existingTemplateIds.contains(tpl.id)) {

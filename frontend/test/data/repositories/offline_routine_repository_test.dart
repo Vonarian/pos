@@ -58,40 +58,47 @@ void main() {
     expect(routines.isEmpty, true);
   });
 
-  test('offline repository automatically spawns habit on future date', () async {
-    final now = DateTime.now();
-    // Aug 15, 2026 is Saturday (weekday = 6)
-    // Aug 16, 2026 is Sunday (weekday = 7)
-    final item = RoutineItem(
-      id: 'daily-creatine-1',
-      title: 'Daily Creatine 5g',
-      category: 'Meds/Supps',
-      timeWindow: TimeWindow.morning,
-      scheduledDate: '2026-08-15',
-      status: ItemStatus.pending,
-      metadata: {
-        'dosage': '5g',
-        'reminder': {'enabled': true, 'time': '08:00', 'days_of_week': [1, 2, 3, 4, 5, 6, 7]},
-      },
-      updatedAt: now,
-      createdAt: now,
-    );
+  test(
+    'offline repository automatically spawns habit on future date',
+    () async {
+      final now = DateTime.now();
+      // Aug 15, 2026 is Saturday (weekday = 6)
+      // Aug 16, 2026 is Sunday (weekday = 7)
+      final item = RoutineItem(
+        id: 'daily-creatine-1',
+        title: 'Daily Creatine 5g',
+        category: 'Meds/Supps',
+        timeWindow: TimeWindow.morning,
+        scheduledDate: '2026-08-15',
+        status: ItemStatus.pending,
+        metadata: {
+          'dosage': '5g',
+          'reminder': {
+            'enabled': true,
+            'time': '08:00',
+            'days_of_week': [1, 2, 3, 4, 5, 6, 7],
+          },
+        },
+        updatedAt: now,
+        createdAt: now,
+      );
 
-    await repo.createRoutine(item);
+      await repo.createRoutine(item);
 
-    // Initial query on 2026-08-15
-    final todayRoutines = await repo.getRoutinesForDate('2026-08-15');
-    expect(todayRoutines.length, 1);
-    expect(todayRoutines.first.title, 'Daily Creatine 5g');
+      // Initial query on 2026-08-15
+      final todayRoutines = await repo.getRoutinesForDate('2026-08-15');
+      expect(todayRoutines.length, 1);
+      expect(todayRoutines.first.title, 'Daily Creatine 5g');
 
-    // Query on future date 2026-08-16
-    final futureRoutines = await repo.getRoutinesForDate('2026-08-16');
-    expect(futureRoutines.length, 1);
-    expect(futureRoutines.first.title, 'Daily Creatine 5g');
-    expect(futureRoutines.first.scheduledDate, '2026-08-16');
-    expect(futureRoutines.first.status, ItemStatus.pending);
-    expect(futureRoutines.first.metadata['dosage'], '5g');
-  });
+      // Query on future date 2026-08-16
+      final futureRoutines = await repo.getRoutinesForDate('2026-08-16');
+      expect(futureRoutines.length, 1);
+      expect(futureRoutines.first.title, 'Daily Creatine 5g');
+      expect(futureRoutines.first.scheduledDate, '2026-08-16');
+      expect(futureRoutines.first.status, ItemStatus.pending);
+      expect(futureRoutines.first.metadata['dosage'], '5g');
+    },
+  );
 
   test('offline repository respects weekday recurrence filter', () async {
     final now = DateTime.now();
@@ -105,7 +112,11 @@ void main() {
       scheduledDate: '2026-08-17',
       status: ItemStatus.pending,
       metadata: {
-        'reminder': {'enabled': true, 'time': '09:00', 'days_of_week': [1, 2, 3, 4, 5]}, // Mon-Fri
+        'reminder': {
+          'enabled': true,
+          'time': '09:00',
+          'days_of_week': [1, 2, 3, 4, 5],
+        }, // Mon-Fri
       },
       updatedAt: now,
       createdAt: now,
@@ -173,7 +184,9 @@ void main() {
     );
 
     // Watch tomorrow's routines
-    final tomorrowRoutines = await repo.watchRoutinesForDate('2026-08-16').first;
+    final tomorrowRoutines = await repo
+        .watchRoutinesForDate('2026-08-16')
+        .first;
     expect(tomorrowRoutines.length, 1);
     expect(tomorrowRoutines.first.title, 'Legacy Creatine');
     expect(tomorrowRoutines.first.scheduledDate, '2026-08-16');

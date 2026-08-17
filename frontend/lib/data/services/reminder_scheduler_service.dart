@@ -87,8 +87,9 @@ class ReminderSchedulerService {
     DateTime now,
   ) async {
     for (final window in TimeWindow.values) {
-      final itemsInWindow =
-          routines.where((e) => e.timeWindow == window).toList();
+      final itemsInWindow = routines
+          .where((e) => e.timeWindow == window)
+          .toList();
       final shouldTrigger = shouldTriggerWindowNudge(
         window: window,
         routinesInWindow: itemsInWindow,
@@ -97,12 +98,11 @@ class ReminderSchedulerService {
       );
 
       if (shouldTrigger) {
-        final pending =
-            itemsInWindow
-                .where((e) => e.status == ItemStatus.pending)
-                .map((e) => e.title)
-                .take(3)
-                .join(', ');
+        final pending = itemsInWindow
+            .where((e) => e.status == ItemStatus.pending)
+            .map((e) => e.title)
+            .take(3)
+            .join(', ');
         final trigger = calculateWindowNudgeTrigger(
           window: window,
           settings: settings,
