@@ -35,11 +35,11 @@ void main() {
       hapticCalls.clear();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-        if (call.method == 'HapticFeedback.vibrate') {
-          hapticCalls.add(call);
-        }
-        return null;
-      });
+            if (call.method == 'HapticFeedback.vibrate') {
+              hapticCalls.add(call);
+            }
+            return null;
+          });
     });
 
     tearDown(() {
@@ -130,39 +130,40 @@ void main() {
       },
     );
 
-    testWidgets('tapping tile when completed triggers onRevert and haptic pulse', (
-      WidgetTester tester,
-    ) async {
-      var reverted = false;
-      final item = buildItem(
-        title: 'Morning Run',
-        status: ItemStatus.completed,
-      );
+    testWidgets(
+      'tapping tile when completed triggers onRevert and haptic pulse',
+      (WidgetTester tester) async {
+        var reverted = false;
+        final item = buildItem(
+          title: 'Morning Run',
+          status: ItemStatus.completed,
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: RoutineItemTile(
-              item: item,
-              onComplete: () {},
-              onRevert: () => reverted = true,
-              onSkip: () {},
-              onDefer: () {},
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: RoutineItemTile(
+                item: item,
+                onComplete: () {},
+                onRevert: () => reverted = true,
+                onSkip: () {},
+                onDefer: () {},
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.byIcon(Icons.check_circle_rounded));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.check_circle_rounded));
+        await tester.pumpAndSettle();
 
-      expect(reverted, isTrue);
-      expect(hapticCalls.isNotEmpty, isTrue);
-      expect(
-        hapticCalls.first.arguments,
-        equals('HapticFeedbackType.lightImpact'),
-      );
-    });
+        expect(reverted, isTrue);
+        expect(hapticCalls.isNotEmpty, isTrue);
+        expect(
+          hapticCalls.first.arguments,
+          equals('HapticFeedbackType.lightImpact'),
+        );
+      },
+    );
 
     testWidgets('renders NFC badge when metadata has nfc_tag', (
       WidgetTester tester,

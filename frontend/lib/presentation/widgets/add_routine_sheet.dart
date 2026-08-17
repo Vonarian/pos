@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../domain/models/reminder_config.dart';
 import '../../domain/models/routine_item.dart';
 import '../providers/routine_provider.dart';
+import 'reminder_picker_section.dart';
 
 class AddRoutineSheet extends StatefulWidget {
   final WidgetRef ref;
@@ -31,6 +33,7 @@ class _AddRoutineSheetState extends State<AddRoutineSheet> {
   final _dosageController = TextEditingController();
   String _category = 'MEDS';
   TimeWindow _window = TimeWindow.morning;
+  ReminderConfig _reminderConfig = const ReminderConfig(enabled: false);
 
   @override
   void dispose() {
@@ -45,6 +48,15 @@ class _AddRoutineSheetState extends State<AddRoutineSheet> {
 
     final repo = widget.ref.read(offlineRoutineRepositoryProvider);
     final now = DateTime.now();
+
+    final meta = <String, dynamic>{};
+    if (_dosageController.text.isNotEmpty) {
+      meta['dosage'] = _dosageController.text.trim();
+    }
+    if (_reminderConfig.enabled) {
+      meta['reminder'] = _reminderConfig.toJson();
+    }
+
     final item = RoutineItem(
       id: const Uuid().v4(),
       title: title,
@@ -52,9 +64,7 @@ class _AddRoutineSheetState extends State<AddRoutineSheet> {
       timeWindow: _window,
       scheduledDate: widget.date,
       status: ItemStatus.pending,
-      metadata: _dosageController.text.isNotEmpty
-          ? {'dosage': _dosageController.text.trim()}
-          : {},
+      metadata: meta,
       updatedAt: now,
       createdAt: now,
     );
@@ -127,6 +137,11 @@ class _AddRoutineSheetState extends State<AddRoutineSheet> {
             Expanded(child: _buildWindowDropdown()),
           ],
         ),
+        const SizedBox(height: 12),
+        ReminderPickerSection(
+          config: _reminderConfig,
+          onChanged: (c) => setState(() => _reminderConfig = c),
+        ),
       ],
     );
   }
@@ -140,28 +155,32 @@ class _AddRoutineSheetState extends State<AddRoutineSheet> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Add Daily Habit / Medication',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          _buildInputs(),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _saveRoutine,
-              child: const Text('Save Ticket', style: TextStyle(fontSize: 16)),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Add Daily Habit / Medication',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            _buildInputs(),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _saveRoutine,
+                child: const Text(
+                  'Save Ticket',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-

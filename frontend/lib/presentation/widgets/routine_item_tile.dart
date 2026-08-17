@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/models/routine_item.dart';
-import 'routine_category_chip.dart';
 import 'routine_item_menu.dart';
+import 'routine_item_tile_content.dart';
 
 class RoutineItemTile extends StatefulWidget {
   final RoutineItem item;
@@ -11,6 +11,7 @@ class RoutineItemTile extends StatefulWidget {
   final VoidCallback onRevert;
   final VoidCallback onSkip;
   final VoidCallback onDefer;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   const RoutineItemTile({
@@ -20,6 +21,7 @@ class RoutineItemTile extends StatefulWidget {
     required this.onRevert,
     required this.onSkip,
     required this.onDefer,
+    this.onEdit,
     this.onDelete,
   });
 
@@ -41,13 +43,17 @@ class _RoutineItemTileState extends State<RoutineItemTile>
     );
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.25)
-            .chain(CurveTween(curve: Curves.easeOutBack)),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 1.25,
+        ).chain(CurveTween(curve: Curves.easeOutBack)),
         weight: 50.0,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.25, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeInBack)),
+        tween: Tween<double>(
+          begin: 1.25,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeInBack)),
         weight: 50.0,
       ),
     ]).animate(_controller);
@@ -73,8 +79,8 @@ class _RoutineItemTileState extends State<RoutineItemTile>
     final iconData = isDone
         ? Icons.check_circle_rounded
         : isSkipped
-            ? Icons.remove_circle_outline_rounded
-            : Icons.radio_button_unchecked_rounded;
+        ? Icons.remove_circle_outline_rounded
+        : Icons.radio_button_unchecked_rounded;
     final iconColor = isDone ? Colors.teal : Colors.grey.shade400;
 
     return ScaleTransition(
@@ -85,40 +91,6 @@ class _RoutineItemTileState extends State<RoutineItemTile>
         onPressed: _handleToggle,
         tooltip: isDone ? 'Revert to Pending' : 'Mark as Done',
       ),
-    );
-  }
-
-  Widget _buildContent(bool isDone, bool isSkipped, BuildContext context) {
-    final item = widget.item;
-    final isInactive = isDone || isSkipped;
-    final defaultColor = Theme.of(context).textTheme.bodyMedium?.color;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RoutineCategoryChip(
-          category: item.category,
-          metadata: item.metadata,
-        ),
-        const SizedBox(height: 4),
-        AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 200),
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            decoration: isInactive ? TextDecoration.lineThrough : null,
-            color: isInactive ? Colors.grey : defaultColor,
-          ),
-          child: Text(item.title),
-        ),
-        if (item.metadata['dosage'] != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            'Dosage: ${item.metadata['dosage']}',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
-          ),
-        ],
-      ],
     );
   }
 
@@ -157,13 +129,20 @@ class _RoutineItemTileState extends State<RoutineItemTile>
               children: [
                 _buildCheckmark(isDone, isSkipped),
                 const SizedBox(width: 8),
-                Expanded(child: _buildContent(isDone, isSkipped, context)),
+                Expanded(
+                  child: RoutineItemTileContent(
+                    item: widget.item,
+                    isDone: isDone,
+                    isSkipped: isSkipped,
+                  ),
+                ),
                 RoutineItemMenu(
                   item: widget.item,
                   onComplete: widget.onComplete,
                   onRevert: widget.onRevert,
                   onSkip: widget.onSkip,
                   onDefer: widget.onDefer,
+                  onEdit: widget.onEdit,
                   onDelete: widget.onDelete,
                 ),
               ],

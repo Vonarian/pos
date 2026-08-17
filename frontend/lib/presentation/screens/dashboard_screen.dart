@@ -9,85 +9,38 @@ import '../providers/metric_provider.dart';
 import '../providers/routine_provider.dart';
 import '../widgets/add_routine_sheet.dart';
 import '../widgets/dashboard_adherence_banner.dart';
+import '../widgets/dashboard_app_bar.dart';
+import '../widgets/dashboard_date_nav_bar.dart';
+import '../widgets/edit_routine_sheet.dart';
 import '../widgets/metric_summary_chart.dart';
 import '../widgets/quadrant_card.dart';
-import '../widgets/sync_app_bar_button.dart';
 import 'home_shell.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.bolt_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'POS',
-            style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.5),
-          ),
-        ],
-      ),
-      actions: const [SyncAppBarButton()],
-    );
-  }
-
-  Widget _buildDateNavBar(
+  void _openEditSheet(
     BuildContext context,
-    WidgetRef ref,
-    String date,
-    bool isToday,
+    OfflineRoutineRepository repo,
+    RoutineItem item,
   ) {
-    final parsed = DateTime.parse(date);
-    final dateLabel = isToday
-        ? "Today (${DateFormat('MMM d').format(parsed)})"
-        : DateFormat('EEEE, MMM d').format(parsed);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.chevron_left_rounded),
-          onPressed: () {
-            final prev = parsed.subtract(const Duration(days: 1));
-            ref.read(selectedDateProvider.notifier).setDate(
-                  DateFormat('yyyy-MM-dd').format(prev),
-                );
-          },
-        ),
-        Text(
-          dateLabel,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        IconButton(
-          icon: const Icon(Icons.chevron_right_rounded),
-          onPressed: () {
-            final next = parsed.add(const Duration(days: 1));
-            ref.read(selectedDateProvider.notifier).setDate(
-                  DateFormat('yyyy-MM-dd').format(next),
-                );
-          },
-        ),
-      ],
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => EditRoutineSheet(
+        item: item,
+        onSave: (updated, applyToFuture) =>
+            repo.updateRoutine(updated, applyToFuture: applyToFuture),
+      ),
     );
   }
 
   Widget _buildQuadrant(
+    BuildContext context,
     OfflineRoutineRepository repo,
     String title,
     String timeRange,
@@ -107,6 +60,7 @@ class DashboardScreen extends ConsumerWidget {
       onRevert: (id) => repo.revertRoutine(id),
       onSkip: (id) => repo.skipRoutine(id),
       onDefer: (id) => repo.deferRoutine(id),
+      onEdit: (item) => _openEditSheet(context, repo, item),
       onDelete: (id) => repo.deleteRoutine(id),
     );
   }
@@ -116,8 +70,7 @@ class DashboardScreen extends ConsumerWidget {
     return metricsAsync.when(
       data: (metrics) => MetricSummaryChart(
         metrics: metrics,
-        isConnected:
-            ref.watch(healthConnectStatusProvider).value ?? false,
+        isConnected: ref.watch(healthConnectStatusProvider).value ?? false,
         onConnect: () async {
           final granted = await HealthConnectChannel.requestPermissions();
           if (granted) {
@@ -145,14 +98,54 @@ class DashboardScreen extends ConsumerWidget {
     bool isToday,
   ) {
     return [
-      _buildDateNavBar(context, ref, selectedDate, isToday),
+      DashboardDateNavBar(ref: ref, date: selectedDate, isToday: isToday),
       const SizedBox(height: 12),
       DashboardAdherenceBanner(state: state),
       const SizedBox(height: 18),
-      _buildQuadrant(repo, 'Morning Protocol', '06:00 – 12:00', Icons.wb_sunny_rounded, TimeWindow.morning, isToday, state, state.morning),
-      _buildQuadrant(repo, 'Mid-Day & Pre-Workout', '12:00 – 18:00', Icons.fitness_center_rounded, TimeWindow.afternoon, isToday, state, state.afternoon),
-      _buildQuadrant(repo, 'Evening & Post-Workout', '18:00 – 21:00', Icons.restaurant_rounded, TimeWindow.evening, isToday, state, state.evening),
-      _buildQuadrant(repo, 'Night / Bedtime Stack', '21:00 – 23:59', Icons.nights_stay_rounded, TimeWindow.night, isToday, state, state.night),
+      _buildQuadrant(
+        context,
+        repo,
+        'Morning Protocol',
+        '06:00 – 12:00',
+        Icons.wb_sunny_rounded,
+        TimeWindow.morning,
+        isToday,
+        state,
+        state.morning,
+      ),
+      _buildQuadrant(
+        context,
+        repo,
+        'Mid-Day & Pre-Workout',
+        '12:00 – 18:00',
+        Icons.fitness_center_rounded,
+        TimeWindow.afternoon,
+        isToday,
+        state,
+        state.afternoon,
+      ),
+      _buildQuadrant(
+        context,
+        repo,
+        'Evening & Post-Workout',
+        '18:00 – 21:00',
+        Icons.restaurant_rounded,
+        TimeWindow.evening,
+        isToday,
+        state,
+        state.evening,
+      ),
+      _buildQuadrant(
+        context,
+        repo,
+        'Night / Bedtime Stack',
+        '21:00 – 23:59',
+        Icons.nights_stay_rounded,
+        TimeWindow.night,
+        isToday,
+        state,
+        state.night,
+      ),
       const SizedBox(height: 12),
       _buildMetricsSection(context, ref),
       const SizedBox(height: 40),
@@ -168,7 +161,7 @@ class DashboardScreen extends ConsumerWidget {
         selectedDate == DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     return Scaffold(
-      appBar: _buildAppBar(context),
+      appBar: DashboardAppBar(ref: ref),
       body: RefreshIndicator(
         onRefresh: () async {
           await repo.syncWithServer();

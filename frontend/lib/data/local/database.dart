@@ -6,9 +6,27 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import 'daos/routine_dao.dart';
+import 'daos/routine_template_dao.dart';
 import 'daos/metric_dao.dart';
 
 part 'database.g.dart';
+
+class RoutineTemplatesTable extends Table {
+  TextColumn get id => text()();
+  TextColumn get title => text()();
+  TextColumn get category => text()();
+  TextColumn get timeWindow => text()();
+  TextColumn get daysOfWeekJson =>
+      text().withDefault(const Constant('[1,2,3,4,5,6,7]'))();
+  TextColumn get metadataJson => text().withDefault(const Constant('{}'))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get createdAt => dateTime()();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
 
 class RoutineItemsTable extends Table {
   TextColumn get id => text()();
@@ -45,14 +63,29 @@ class HealthMetricsTable extends Table {
 }
 
 @DriftDatabase(
-  tables: [RoutineItemsTable, HealthMetricsTable],
-  daos: [RoutineDao, MetricDao],
+  tables: [RoutineTemplatesTable, RoutineItemsTable, HealthMetricsTable],
+  daos: [RoutineTemplateDao, RoutineDao, MetricDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) async {
+      await m.createAll();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(routineTemplatesTable);
+        try {
+          await m.addColumn(routineItemsTable, routineItemsTable.templateId);
+        } catch (_) {}
+      }
+    },
+  );
 }
 
 LazyDatabase _openConnection() {
