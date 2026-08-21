@@ -178,6 +178,7 @@ void main() {
         timeWindow: 'MORNING',
         scheduledDate: '2026-08-15',
         status: const Value('PENDING'),
+        metadataJson: const Value('{"reminder":{"enabled":true,"is_recurring":true,"time":"08:00"}}'),
         updatedAt: now,
         createdAt: now,
       ),
