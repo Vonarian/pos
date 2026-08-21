@@ -1,7 +1,8 @@
 package domain_test
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,6 +32,11 @@ func TestRoutineItemSerialization(t *testing.T) {
 		t.Fatalf("failed to marshal RoutineItem: %v", err)
 	}
 
+	// Verify omitzero when CompletedAt is zero
+	if strings.Contains(string(data), "completed_at") {
+		t.Errorf("expected completed_at to be omitted when zero, got JSON: %s", string(data))
+	}
+
 	var unmarshaled domain.RoutineItem
 	if err := json.Unmarshal(data, &unmarshaled); err != nil {
 		t.Fatalf("failed to unmarshal RoutineItem: %v", err)
@@ -38,6 +44,19 @@ func TestRoutineItemSerialization(t *testing.T) {
 
 	if unmarshaled.ID != item.ID || unmarshaled.Status != domain.StatusPending {
 		t.Errorf("expected ID %s and status %s, got ID %s and status %s", item.ID, item.Status, unmarshaled.ID, unmarshaled.Status)
+	}
+
+	// Verify completed_at appears when populated
+	completedTime := now.Add(10 * time.Minute)
+	item.CompletedAt = completedTime
+	item.Status = domain.StatusCompleted
+
+	dataWithCompleted, err := json.Marshal(item)
+	if err != nil {
+		t.Fatalf("failed to marshal completed RoutineItem: %v", err)
+	}
+	if !strings.Contains(string(dataWithCompleted), "completed_at") {
+		t.Errorf("expected completed_at in JSON when set, got: %s", string(dataWithCompleted))
 	}
 }
 

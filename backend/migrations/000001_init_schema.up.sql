@@ -1,6 +1,6 @@
 -- Routine Templates table
 CREATE TABLE IF NOT EXISTS routine_templates (
-    id VARCHAR(64) PRIMARY KEY,
+    id UUID PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     category VARCHAR(64) NOT NULL,
     time_window VARCHAR(32) NOT NULL,
@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS routine_templates (
 
 -- Daily Routine Items table
 CREATE TABLE IF NOT EXISTS routine_items (
-    id VARCHAR(64) PRIMARY KEY,
-    template_id VARCHAR(64) REFERENCES routine_templates(id) ON DELETE SET NULL,
+    id UUID PRIMARY KEY,
+    template_id UUID REFERENCES routine_templates(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     category VARCHAR(64) NOT NULL,
     time_window VARCHAR(32) NOT NULL,
@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_routine_items_nfc ON routine_items USING gin (met
 
 -- Normalized Health Metrics table
 CREATE TABLE IF NOT EXISTS health_metrics (
-    id VARCHAR(64) PRIMARY KEY,
+    id UUID PRIMARY KEY,
     source VARCHAR(64) NOT NULL,
     metric VARCHAR(64) NOT NULL,
     value DOUBLE PRECISION NOT NULL,

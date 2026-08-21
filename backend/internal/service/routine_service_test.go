@@ -68,7 +68,11 @@ func (m *mockRoutineRepo) UpdateStatus(ctx context.Context, id string, status do
 		return nil
 	}
 	item.Status = status
-	item.CompletedAt = completedAt
+	if completedAt != nil {
+		item.CompletedAt = *completedAt
+	} else {
+		item.CompletedAt = time.Time{}
+	}
 	item.UpdatedAt = time.Now().UTC()
 	m.items[id] = item
 	return nil
@@ -149,7 +153,7 @@ func TestRoutineServiceStateTransitions(t *testing.T) {
 		t.Fatalf("failed to complete item: %v", err)
 	}
 	completed, _ := svc.GetByID(context.Background(), "item-1")
-	if completed.Status != domain.StatusCompleted || completed.CompletedAt == nil {
+	if completed.Status != domain.StatusCompleted || completed.CompletedAt.IsZero() {
 		t.Errorf("expected COMPLETED with timestamp, got %s", completed.Status)
 	}
 }
