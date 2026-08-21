@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/pos/backend/internal/domain"
 	"github.com/pos/backend/internal/service"
@@ -57,3 +58,34 @@ func TestMetricServiceSummary(t *testing.T) {
 		t.Errorf("summary values mismatch: %+v", summary)
 	}
 }
+
+func TestMetricServiceIngestGeneratesUUID(t *testing.T) {
+	repo := &mockMetricRepo{}
+	svc := service.NewMetricService(repo)
+
+	point := domain.HealthDataPoint{
+		Source:    "health_connect",
+		Metric:    domain.MetricSteps,
+		Value:     5000,
+		Unit:      "count",
+		StartTime: time.Now().Add(-1 * time.Hour),
+		EndTime:   time.Now(),
+	}
+
+	if err := svc.IngestMetrics(context.Background(), []domain.HealthDataPoint{point}); err != nil {
+		t.Fatalf("failed to ingest metrics: %v", err)
+	}
+
+	if len(repo.points) != 1 {
+		t.Fatalf("expected 1 stored point, got %d", len(repo.points))
+	}
+
+	parsed, err := uuid.Parse(repo.points[0].ID)
+	if err != nil {
+		t.Fatalf("expected valid UUID, got error: %v (id: %s)", err, repo.points[0].ID)
+	}
+	if parsed == uuid.Nil() {
+		t.Error("expected non-nil UUID")
+	}
+}
+

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/pos/backend/internal/domain"
 )
 
