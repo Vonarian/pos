@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/pos/backend/internal/domain"
 	"github.com/pos/backend/internal/service"
@@ -181,3 +182,33 @@ func Test4QuadrantView(t *testing.T) {
 		t.Errorf("expected adherence rate 0.25, got %f", view.AdherenceRate)
 	}
 }
+
+func TestRoutineServiceCreateGeneratesUUID(t *testing.T) {
+	repo := newMockRoutineRepo()
+	svc := service.NewRoutineService(repo)
+
+	item := domain.RoutineItem{
+		Title:         "Hydrate",
+		Category:      "HEALTH",
+		TimeWindow:    domain.WindowMorning,
+		ScheduledDate: "2026-08-15",
+		Status:        domain.StatusPending,
+	}
+
+	if err := svc.CreateItem(context.Background(), &item); err != nil {
+		t.Fatalf("failed to create item: %v", err)
+	}
+
+	if item.ID == "" {
+		t.Fatal("expected item.ID to be populated")
+	}
+
+	parsed, err := uuid.Parse(item.ID)
+	if err != nil {
+		t.Fatalf("expected valid UUID, got error: %v (id: %s)", err, item.ID)
+	}
+	if parsed == uuid.Nil() {
+		t.Error("expected non-nil UUID")
+	}
+}
+
