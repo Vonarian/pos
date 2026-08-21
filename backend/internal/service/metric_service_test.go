@@ -88,4 +88,3 @@ func TestMetricServiceIngestGeneratesUUID(t *testing.T) {
 		t.Error("expected non-nil UUID")
 	}
 }
-
