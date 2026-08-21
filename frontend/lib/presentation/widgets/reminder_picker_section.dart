@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../domain/models/reminder_config.dart';
 
+import 'reminder_day_filter.dart';
+
 class ReminderPickerSection extends StatelessWidget {
   final ReminderConfig config;
   final ValueChanged<ReminderConfig> onChanged;
@@ -48,7 +50,7 @@ class ReminderPickerSection extends StatelessWidget {
       runSpacing: 4,
       children: [
         ChoiceChip(
-          label: const Text('Once / Tonight'),
+          label: const Text('Once'),
           selected: config.isOneTime,
           onSelected: (_) => onChanged(config.copyWith(isRecurring: false)),
         ),
@@ -90,42 +92,11 @@ class ReminderPickerSection extends StatelessWidget {
     );
   }
 
-  Widget _buildDayFilterChips() {
-    const days = [
-      {'label': 'M', 'val': 1},
-      {'label': 'T', 'val': 2},
-      {'label': 'W', 'val': 3},
-      {'label': 'T', 'val': 4},
-      {'label': 'F', 'val': 5},
-      {'label': 'S', 'val': 6},
-      {'label': 'S', 'val': 7},
-    ];
-
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      children: days.map((d) {
-        final val = d['val'] as int;
-        final isSelected = config.daysOfWeek.contains(val);
-        return FilterChip(
-          label: Text(d['label'] as String),
-          selected: isSelected,
-          onSelected: (selected) {
-            final list = List<int>.from(config.daysOfWeek);
-            if (selected) {
-              list.add(val);
-            } else {
-              list.remove(val);
-            }
-            list.sort();
-            onChanged(config.copyWith(daysOfWeek: list, isRecurring: true));
-          },
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildRepeatingPresets() {
+    final isWeekdays = config.daysOfWeek.length == 5 &&
+        !config.daysOfWeek.contains(6) &&
+        !config.daysOfWeek.contains(7);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -136,21 +107,21 @@ class ReminderPickerSection extends StatelessWidget {
             ChoiceChip(
               label: const Text('Daily'),
               selected: config.isDaily,
-              onSelected: (_) => onChanged(config.copyWith(daysOfWeek: const [], isRecurring: true)),
+              onSelected: (_) => onChanged(
+                config.copyWith(daysOfWeek: const [], isRecurring: true),
+              ),
             ),
             ChoiceChip(
               label: const Text('Weekdays'),
-              selected:
-                  config.daysOfWeek.length == 5 &&
-                  !config.daysOfWeek.contains(6) &&
-                  !config.daysOfWeek.contains(7),
-              onSelected: (_) =>
-                  onChanged(config.copyWith(daysOfWeek: [1, 2, 3, 4, 5], isRecurring: true)),
+              selected: isWeekdays,
+              onSelected: (_) => onChanged(
+                config.copyWith(daysOfWeek: [1, 2, 3, 4, 5], isRecurring: true),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        _buildDayFilterChips(),
+        ReminderDayFilter(config: config, onChanged: onChanged),
       ],
     );
   }
@@ -169,7 +140,10 @@ class ReminderPickerSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        if (config.isOneTime) _buildOneTimePresets() else _buildRepeatingPresets(),
+        if (config.isOneTime)
+          _buildOneTimePresets()
+        else
+          _buildRepeatingPresets(),
       ],
     );
   }
@@ -211,4 +185,3 @@ class ReminderPickerSection extends StatelessWidget {
     );
   }
 }
-

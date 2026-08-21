@@ -37,7 +37,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(currentConfig.enabled, true);
-      expect(find.text('Once / Tonight'), findsOneWidget);
+      expect(find.text('Once'), findsOneWidget);
       expect(find.text('Repeating Habit'), findsOneWidget);
       expect(find.text('Tonight 9 PM'), findsOneWidget);
     });
