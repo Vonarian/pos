@@ -12,9 +12,7 @@ class DashboardAdherenceBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .primaryContainer
+        color: Theme.of(context).colorScheme.primaryContainer
             .withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(14),
       ),

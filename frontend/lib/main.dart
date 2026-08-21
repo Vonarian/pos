@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'data/native/notification_service.dart';
 import 'presentation/screens/home_shell.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await NativeNotificationService.initialize();
+  } catch (_) {
+    // Non-fatal if running in headless test/desktop environment without notification permissions
+  }
   runApp(const ProviderScope(child: POSApp()));
 }
 

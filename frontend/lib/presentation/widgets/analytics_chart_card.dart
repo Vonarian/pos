@@ -1,8 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../domain/models/health_data_point.dart';
+import 'analytics_chart_builder.dart';
 import 'analytics_stat_row.dart';
 
 class AnalyticsChartCard extends StatelessWidget {
@@ -46,66 +46,19 @@ class AnalyticsChartCard extends StatelessWidget {
     }
     if (metric == MetricType.weight) return "${val.toStringAsFixed(1)} kg";
     if (metric == MetricType.steps) return val.round().toString();
-    if (metric == MetricType.caloriesConsumed || metric == MetricType.caloriesBurned) {
+    if (metric == MetricType.caloriesConsumed ||
+        metric == MetricType.caloriesBurned) {
       return "${val.round()} kcal";
     }
     if (metric == MetricType.waterIntake) return "${val.round()} ml";
     return val.toStringAsFixed(1);
   }
 
-  FlTitlesData _buildTitlesData(List<MapEntry<DateTime, double>> entries) {
-    return FlTitlesData(
-      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      bottomTitles: AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: 22,
-          interval: (days / 6).clamp(1.0, 10.0),
-          getTitlesWidget: (value, meta) {
-            final idx = value.toInt();
-            if (idx >= 0 && idx < entries.length) {
-              return Text(
-                DateFormat('M/d').format(entries[idx].key),
-                style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-      ),
-    );
-  }
-
-  LineChartBarData _buildBarData(List<FlSpot> spots, Color color) {
-    return LineChartBarData(
-      spots: spots,
-      isCurved: true,
-      color: color,
-      barWidth: 3,
-      isStrokeCapRound: true,
-      dotData: FlDotData(
-        show: days <= 14,
-        getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-          radius: 3.5,
-          color: color,
-          strokeWidth: 1.5,
-          strokeColor: const Color(0xFF141C2B),
-        ),
-      ),
-      belowBarData: BarAreaData(
-        show: true,
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0.0)],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLineChart(List<FlSpot> spots, double maxVal, List<MapEntry<DateTime, double>> entries) {
+  Widget _buildLineChart(
+    List<FlSpot> spots,
+    double maxVal,
+    List<MapEntry<DateTime, double>> entries,
+  ) {
     final color = _getMetricColor();
     if (spots.isEmpty || maxVal == 0) {
       return Center(
@@ -120,24 +73,33 @@ class AnalyticsChartCard extends StatelessWidget {
       LineChartData(
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipItems: (touched) => touched.map((s) => LineTooltipItem(
-              _formatValue(s.y),
-              const TextStyle(color: Color(0xFFF8FAFC), fontWeight: FontWeight.bold, fontSize: 12),
-            )).toList(),
+            getTooltipItems: (touched) => touched
+                .map(
+                  (s) => LineTooltipItem(
+                    _formatValue(s.y),
+                    const TextStyle(
+                      color: Color(0xFFF8FAFC),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                )
+                .toList(),
           ),
         ),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          getDrawingHorizontalLine: (value) => const FlLine(color: Color(0xFF1E293B), strokeWidth: 1),
+          getDrawingHorizontalLine: (value) =>
+              const FlLine(color: Color(0xFF1E293B), strokeWidth: 1),
         ),
-        titlesData: _buildTitlesData(entries),
+        titlesData: AnalyticsChartBuilder.buildTitlesData(days, entries),
         borderData: FlBorderData(show: false),
         minX: 0,
         maxX: (days - 1).toDouble(),
         minY: 0,
         maxY: maxVal * 1.25,
-        lineBarsData: [_buildBarData(spots, color)],
+        lineBarsData: [AnalyticsChartBuilder.buildBarData(days, spots, color)],
       ),
     );
   }
@@ -147,10 +109,19 @@ class AnalyticsChartCard extends StatelessWidget {
     final now = DateTime.now();
     final dailyValues = <DateTime, double>{};
     for (int i = days - 1; i >= 0; i--) {
-      dailyValues[DateTime(now.year, now.month, now.day).subtract(Duration(days: i))] = 0.0;
+      dailyValues[DateTime(
+            now.year,
+            now.month,
+            now.day,
+          ).subtract(Duration(days: i))] =
+          0.0;
     }
     for (final p in points) {
-      final pDate = DateTime(p.startTime.year, p.startTime.month, p.startTime.day);
+      final pDate = DateTime(
+        p.startTime.year,
+        p.startTime.month,
+        p.startTime.day,
+      );
       if (dailyValues.containsKey(pDate)) {
         if (metric == MetricType.weight || p.source == 'health_connect') {
           dailyValues[pDate] = p.value;

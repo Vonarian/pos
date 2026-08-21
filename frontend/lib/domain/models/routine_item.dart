@@ -1,3 +1,5 @@
+import 'reminder_config.dart';
+
 enum ItemStatus {
   pending('PENDING'),
   completed('COMPLETED'),
@@ -58,6 +60,17 @@ class RoutineItem {
     required this.updatedAt,
     required this.createdAt,
   });
+
+  ReminderConfig? get reminderConfig {
+    if (metadata.containsKey('reminder') && metadata['reminder'] is Map) {
+      return ReminderConfig.fromJson(
+        Map<String, dynamic>.from(metadata['reminder'] as Map),
+      );
+    }
+    return null;
+  }
+
+  bool get isRecurring => reminderConfig?.isRecurring ?? (templateId != null);
 
   factory RoutineItem.fromJson(Map<String, dynamic> json) {
     return RoutineItem(

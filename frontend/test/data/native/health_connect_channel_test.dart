@@ -38,7 +38,7 @@ void main() {
                   'burnedCalories': 450.0,
                   'sleepMinutes': 480.0,
                   'weightKg': 75.0,
-                }
+                },
               ];
             default:
               return null;
@@ -71,16 +71,22 @@ void main() {
   });
 
   test('MetricType supports caloriesConsumed', () {
-    expect(MetricType.fromString('CALORIES_CONSUMED'), MetricType.caloriesConsumed);
+    expect(
+      MetricType.fromString('CALORIES_CONSUMED'),
+      MetricType.caloriesConsumed,
+    );
     expect(MetricType.fromString('NUTRITION'), MetricType.caloriesConsumed);
   });
 
-  test('HealthConnectChannel reads nutrition and calories aggregates', () async {
-    final metrics = await HealthConnectChannel.getTodayMetrics();
-    expect(metrics['STEPS'], 6200);
-    expect(metrics['CALORIES_CONSUMED'], 2100.0);
-    expect(metrics['CALORIES_BURNED'], 450.0);
-    expect(metrics['SLEEP_DURATION'], 480.0);
-    expect(metrics['WEIGHT'], 75.0);
-  });
+  test(
+    'HealthConnectChannel reads nutrition and calories aggregates',
+    () async {
+      final metrics = await HealthConnectChannel.getTodayMetrics();
+      expect(metrics['STEPS'], 6200);
+      expect(metrics['CALORIES_CONSUMED'], 2100.0);
+      expect(metrics['CALORIES_BURNED'], 450.0);
+      expect(metrics['SLEEP_DURATION'], 480.0);
+      expect(metrics['WEIGHT'], 75.0);
+    },
+  );
 }

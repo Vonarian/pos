@@ -10,8 +10,9 @@ class CurrentTabNotifier extends Notifier<int> {
   void select(int index) => state = index;
 }
 
-final currentTabProvider =
-    NotifierProvider<CurrentTabNotifier, int>(CurrentTabNotifier.new);
+final currentTabProvider = NotifierProvider<CurrentTabNotifier, int>(
+  CurrentTabNotifier.new,
+);
 
 class HomeShell extends ConsumerWidget {
   const HomeShell({super.key});
@@ -23,10 +24,7 @@ class HomeShell extends ConsumerWidget {
     return Scaffold(
       body: IndexedStack(
         index: activeTab,
-        children: const [
-          DashboardScreen(),
-          AnalyticsScreen(),
-        ],
+        children: const [DashboardScreen(), AnalyticsScreen()],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: activeTab,

@@ -22,6 +22,10 @@ class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
         .watch();
   }
 
+  Future<List<RoutineItemsTableData>> getAllRoutines() {
+    return select(routineItemsTable).get();
+  }
+
   Future<RoutineItemsTableData?> getRoutineById(String id) {
     return (select(
       routineItemsTable,
@@ -89,5 +93,34 @@ class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
 
   Future<int> deleteRoutine(String id) {
     return (delete(routineItemsTable)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
+  Future<int> deleteRoutinesByTemplateId(String templateId) {
+    return (delete(
+      routineItemsTable,
+    )..where((tbl) => tbl.templateId.equals(templateId))).go();
+  }
+
+  Future<int> updatePendingRoutinesByTemplateId({
+    required String templateId,
+    required String title,
+    required String category,
+    required String timeWindow,
+    required String metadataJson,
+  }) {
+    return (update(routineItemsTable)..where(
+          (tbl) =>
+              tbl.templateId.equals(templateId) & tbl.status.equals('PENDING'),
+        ))
+        .write(
+          RoutineItemsTableCompanion(
+            title: Value(title),
+            category: Value(category),
+            timeWindow: Value(timeWindow),
+            metadataJson: Value(metadataJson),
+            updatedAt: Value(DateTime.now()),
+            isSynced: const Value(false),
+          ),
+        );
   }
 }

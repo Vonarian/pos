@@ -13,12 +13,13 @@ final offlineMetricRepositoryProvider = Provider<OfflineMetricRepository>((
   return OfflineMetricRepository(db: db, apiClient: client);
 });
 
-final healthConnectStatusProvider =
-    FutureProvider.autoDispose<bool>((ref) async {
-      final isAvail = await HealthConnectChannel.isAvailable();
-      if (!isAvail) return false;
-      return HealthConnectChannel.hasPermissions();
-    });
+final healthConnectStatusProvider = FutureProvider.autoDispose<bool>((
+  ref,
+) async {
+  final isAvail = await HealthConnectChannel.isAvailable();
+  if (!isAvail) return false;
+  return HealthConnectChannel.hasPermissions();
+});
 
 class SelectedMetricNotifier extends Notifier<MetricType> {
   @override
@@ -37,32 +38,36 @@ class RangeDaysNotifier extends Notifier<int> {
   void select(int days) => state = days;
 }
 
-final rangeDaysProvider =
-    NotifierProvider<RangeDaysNotifier, int>(RangeDaysNotifier.new);
+final rangeDaysProvider = NotifierProvider<RangeDaysNotifier, int>(
+  RangeDaysNotifier.new,
+);
 
-final metricSeriesProvider =
-    FutureProvider.autoDispose<List<HealthDataPoint>>((ref) async {
-      final repo = ref.watch(offlineMetricRepositoryProvider);
-      final metric = ref.watch(selectedMetricTypeProvider);
-      final days = ref.watch(rangeDaysProvider);
-      final now = DateTime.now();
-      final to = DateTime(now.year, now.month, now.day, 23, 59, 59);
-      final from = DateTime(now.year, now.month, now.day).subtract(
-        Duration(days: days - 1),
-      );
+final metricSeriesProvider = FutureProvider.autoDispose<List<HealthDataPoint>>((
+  ref,
+) async {
+  final repo = ref.watch(offlineMetricRepositoryProvider);
+  final metric = ref.watch(selectedMetricTypeProvider);
+  final days = ref.watch(rangeDaysProvider);
+  final now = DateTime.now();
+  final to = DateTime(now.year, now.month, now.day, 23, 59, 59);
+  final from = DateTime(
+    now.year,
+    now.month,
+    now.day,
+  ).subtract(Duration(days: days - 1));
 
-      try {
-        if (await HealthConnectChannel.isAvailable() &&
-            await HealthConnectChannel.hasPermissions()) {
-          final points = await HealthConnectChannel.getHealthHistory(days: days);
-          if (points.isNotEmpty) {
-            await repo.ingestMetrics(points);
-          }
-        }
-      } catch (_) {}
+  try {
+    if (await HealthConnectChannel.isAvailable() &&
+        await HealthConnectChannel.hasPermissions()) {
+      final points = await HealthConnectChannel.getHealthHistory(days: days);
+      if (points.isNotEmpty) {
+        await repo.ingestMetrics(points);
+      }
+    }
+  } catch (_) {}
 
-      return repo.getMetricSeries(metric, from, to);
-    });
+  return repo.getMetricSeries(metric, from, to);
+});
 
 final dailyMetricSummaryProvider =
     FutureProvider.autoDispose<Map<String, double>>((ref) async {

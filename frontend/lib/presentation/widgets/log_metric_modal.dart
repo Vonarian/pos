@@ -90,7 +90,11 @@ class _LogMetricModalState extends ConsumerState<LogMetricModal> {
       children: [
         const Text(
           'Log Health Metric',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFF8FAFC)),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFF8FAFC),
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8)),
@@ -113,12 +117,30 @@ class _LogMetricModalState extends ConsumerState<LogMetricModal> {
         ),
       ),
       items: const [
-        DropdownMenuItem(value: MetricType.caloriesConsumed, child: Text('🍲 Food Intake (kcal)')),
-        DropdownMenuItem(value: MetricType.caloriesBurned, child: Text('🔥 Active Calories (kcal)')),
-        DropdownMenuItem(value: MetricType.weight, child: Text('⚖️ Weight (kg)')),
-        DropdownMenuItem(value: MetricType.waterIntake, child: Text('💧 Water Intake (ml)')),
-        DropdownMenuItem(value: MetricType.sleepDuration, child: Text('😴 Sleep (minutes)')),
-        DropdownMenuItem(value: MetricType.steps, child: Text('🚶 Steps (count)')),
+        DropdownMenuItem(
+          value: MetricType.caloriesConsumed,
+          child: Text('🍲 Food Intake (kcal)'),
+        ),
+        DropdownMenuItem(
+          value: MetricType.caloriesBurned,
+          child: Text('🔥 Active Calories (kcal)'),
+        ),
+        DropdownMenuItem(
+          value: MetricType.weight,
+          child: Text('⚖️ Weight (kg)'),
+        ),
+        DropdownMenuItem(
+          value: MetricType.waterIntake,
+          child: Text('💧 Water Intake (ml)'),
+        ),
+        DropdownMenuItem(
+          value: MetricType.sleepDuration,
+          child: Text('😴 Sleep (minutes)'),
+        ),
+        DropdownMenuItem(
+          value: MetricType.steps,
+          child: Text('🚶 Steps (count)'),
+        ),
       ],
       onChanged: (val) {
         if (val != null) setState(() => _selectedMetric = val);
@@ -137,7 +159,10 @@ class _LogMetricModalState extends ConsumerState<LogMetricModal> {
     } else if (_isSaved) {
       child = const Icon(Icons.check_rounded, color: Colors.white, size: 24);
     } else {
-      child = const Text('Save Entry', style: TextStyle(fontWeight: FontWeight.bold));
+      child = const Text(
+        'Save Entry',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      );
     }
 
     return SizedBox(

@@ -46,14 +46,14 @@ class ApiClient {
     await _dio.post('/api/v1/routines/defer', data: {'id': id});
   }
 
-  Future<List<dynamic>> getMetricSeries(String metric, {String? from, String? to}) async {
+  Future<List<dynamic>> getMetricSeries(
+    String metric, {
+    String? from,
+    String? to,
+  }) async {
     final response = await _dio.get(
       '/api/v1/metrics/series',
-      queryParameters: {
-        'metric': metric,
-        'from': ?from,
-        'to': ?to,
-      },
+      queryParameters: {'metric': metric, 'from': ?from, 'to': ?to},
     );
     return response.data as List<dynamic>;
   }
