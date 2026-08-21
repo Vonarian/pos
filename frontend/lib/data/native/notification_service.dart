@@ -70,7 +70,7 @@ class NativeNotificationService {
 
     try {
       await plugin.initialize(
-        initSettings,
+        settings: initSettings,
         onDidReceiveNotificationResponse: (response) {
           notificationTapBackground(response);
         },
@@ -127,14 +127,13 @@ class NativeNotificationService {
       );
 
       await plugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzDate,
-        _buildHabitDetails(snoozeMinutes),
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: tzDate,
+        notificationDetails: _buildHabitDetails(snoozeMinutes),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
         payload: payload,
       );
     } catch (_) {}
@@ -173,27 +172,25 @@ class NativeNotificationService {
       );
 
       await plugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzDate,
-        const NotificationDetails(android: android),
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: tzDate,
+        notificationDetails: const NotificationDetails(android: android),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
       );
     } catch (_) {}
   }
 
   static Future<void> cancelHabitReminder(String routineId) async {
     try {
-      await plugin.cancel(getNotificationIdForRoutine(routineId));
+      await plugin.cancel(id: getNotificationIdForRoutine(routineId));
     } catch (_) {}
   }
 
   static Future<void> cancelWindowNudge(TimeWindow window) async {
     try {
-      await plugin.cancel(getNotificationIdForWindow(window));
+      await plugin.cancel(id: getNotificationIdForWindow(window));
     } catch (_) {}
   }
 }
