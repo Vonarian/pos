@@ -16,6 +16,7 @@ void main() {
     test('calculates scheduled time today for pending habit with reminder', () {
       final config = const ReminderConfig(
         enabled: true,
+        isRecurring: true,
         time: '09:30',
         daysOfWeek: [], // Daily
       );
@@ -38,6 +39,60 @@ void main() {
       );
 
       expect(scheduledTime, DateTime(2026, 8, 15, 9, 30));
+    });
+
+    test('calculates scheduled time tonight for one-time reminder on matching date', () {
+      final config = const ReminderConfig(
+        enabled: true,
+        isRecurring: false,
+        time: '21:00',
+      );
+
+      final item = RoutineItem(
+        id: 'reminder-tonight-1',
+        title: 'Call family tonight',
+        category: 'HABIT',
+        timeWindow: TimeWindow.night,
+        scheduledDate: '2026-08-15',
+        status: ItemStatus.pending,
+        metadata: {'reminder': config.toJson()},
+        updatedAt: now,
+        createdAt: now,
+      );
+
+      final scheduledTime = ReminderSchedulerService.calculateReminderTrigger(
+        item: item,
+        now: now,
+      );
+
+      expect(scheduledTime, DateTime(2026, 8, 15, 21, 00));
+    });
+
+    test('returns null for one-time reminder if scheduled for different date', () {
+      final config = const ReminderConfig(
+        enabled: true,
+        isRecurring: false,
+        time: '21:00',
+      );
+
+      final item = RoutineItem(
+        id: 'reminder-tomorrow-1',
+        title: 'Tomorrow reminder',
+        category: 'HABIT',
+        timeWindow: TimeWindow.night,
+        scheduledDate: '2026-08-16', // Tomorrow
+        status: ItemStatus.pending,
+        metadata: {'reminder': config.toJson()},
+        updatedAt: now,
+        createdAt: now,
+      );
+
+      final scheduledTime = ReminderSchedulerService.calculateReminderTrigger(
+        item: item,
+        now: now,
+      );
+
+      expect(scheduledTime, isNull);
     });
 
     test('returns null if reminder is disabled or in the past', () {
@@ -84,6 +139,7 @@ void main() {
       // 2026-08-15 is Saturday (weekday = 6)
       final weekdaysOnlyConfig = const ReminderConfig(
         enabled: true,
+        isRecurring: true,
         time: '09:30',
         daysOfWeek: [1, 2, 3, 4, 5],
       );

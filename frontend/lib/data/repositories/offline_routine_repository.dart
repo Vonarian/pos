@@ -152,38 +152,43 @@ class OfflineRoutineRepository {
   }
 
   Future<void> createRoutine(RoutineItem item) async {
-    final templateId = item.templateId ?? 'tpl_${item.id}';
-    final days = (item.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
-        ? item.reminderConfig!.daysOfWeek
-        : const [1, 2, 3, 4, 5, 6, 7];
+    final shouldTemplate = item.templateId != null || item.isRecurring;
+    String? templateId = item.templateId;
 
-    await db.routineTemplateDao.upsertTemplate(
-      RoutineTemplatesTableCompanion.insert(
-        id: templateId,
-        title: item.title,
-        category: item.category,
-        timeWindow: item.timeWindow.value,
-        daysOfWeekJson: Value(jsonEncode(days)),
-        metadataJson: Value(jsonEncode(item.metadata)),
-        isActive: const Value(true),
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        isSynced: const Value(false),
-      ),
-    );
+    if (shouldTemplate) {
+      templateId ??= 'tpl_${item.id}';
+      final days = (item.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
+          ? item.reminderConfig!.daysOfWeek
+          : const [1, 2, 3, 4, 5, 6, 7];
 
-    final itemWithTemplate = item.copyWith(templateId: templateId);
+      await db.routineTemplateDao.upsertTemplate(
+        RoutineTemplatesTableCompanion.insert(
+          id: templateId,
+          title: item.title,
+          category: item.category,
+          timeWindow: item.timeWindow.value,
+          daysOfWeekJson: Value(jsonEncode(days)),
+          metadataJson: Value(jsonEncode(item.metadata)),
+          isActive: const Value(true),
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          isSynced: const Value(false),
+        ),
+      );
+    }
+
+    final itemToSave = templateId != null
+        ? item.copyWith(templateId: templateId)
+        : item;
+
     await db.routineDao.upsertRoutine(
-      OfflineRoutineMapper.mapDomainToCompanion(
-        itemWithTemplate,
-        isSynced: false,
-      ),
+      OfflineRoutineMapper.mapDomainToCompanion(itemToSave, isSynced: false),
     );
 
     if (apiClient != null) {
       try {
-        await apiClient!.pushSync(routines: [itemWithTemplate], metrics: []);
-        await db.routineDao.markAsSynced([itemWithTemplate.id]);
+        await apiClient!.pushSync(routines: [itemToSave], metrics: []);
+        await db.routineDao.markAsSynced([itemToSave.id]);
       } catch (_) {}
     }
   }

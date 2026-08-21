@@ -42,6 +42,54 @@ class ReminderPickerSection extends StatelessWidget {
     );
   }
 
+  Widget _buildModeSelector() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        ChoiceChip(
+          label: const Text('Once / Tonight'),
+          selected: config.isOneTime,
+          onSelected: (_) => onChanged(config.copyWith(isRecurring: false)),
+        ),
+        ChoiceChip(
+          label: const Text('Repeating Habit'),
+          selected: config.isRecurring,
+          onSelected: (_) => onChanged(config.copyWith(isRecurring: true)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOneTimePresets() {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: [
+        ActionChip(
+          label: const Text('Tonight 9 PM'),
+          avatar: const Icon(Icons.nightlight_round, size: 16),
+          onPressed: () => onChanged(config.copyWith(time: '21:00', isRecurring: false)),
+        ),
+        ActionChip(
+          label: const Text('In 1 Hour'),
+          avatar: const Icon(Icons.timer_outlined, size: 16),
+          onPressed: () {
+            final target = DateTime.now().add(const Duration(hours: 1));
+            final h = target.hour.toString().padLeft(2, '0');
+            final m = target.minute.toString().padLeft(2, '0');
+            onChanged(config.copyWith(time: '$h:$m', isRecurring: false));
+          },
+        ),
+        ActionChip(
+          label: const Text('Morning 8 AM'),
+          avatar: const Icon(Icons.wb_sunny_outlined, size: 16),
+          onPressed: () => onChanged(config.copyWith(time: '08:00', isRecurring: false)),
+        ),
+      ],
+    );
+  }
+
   Widget _buildDayFilterChips() {
     const days = [
       {'label': 'M', 'val': 1},
@@ -55,6 +103,7 @@ class ReminderPickerSection extends StatelessWidget {
 
     return Wrap(
       spacing: 4,
+      runSpacing: 4,
       children: days.map((d) {
         final val = d['val'] as int;
         final isSelected = config.daysOfWeek.contains(val);
@@ -69,31 +118,39 @@ class ReminderPickerSection extends StatelessWidget {
               list.remove(val);
             }
             list.sort();
-            onChanged(config.copyWith(daysOfWeek: list));
+            onChanged(config.copyWith(daysOfWeek: list, isRecurring: true));
           },
         );
       }).toList(),
     );
   }
 
-  Widget _buildPresetRow() {
-    return Row(
+  Widget _buildRepeatingPresets() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ChoiceChip(
-          label: const Text('Daily'),
-          selected: config.isDaily,
-          onSelected: (_) => onChanged(config.copyWith(daysOfWeek: const [])),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            ChoiceChip(
+              label: const Text('Daily'),
+              selected: config.isDaily,
+              onSelected: (_) => onChanged(config.copyWith(daysOfWeek: const [], isRecurring: true)),
+            ),
+            ChoiceChip(
+              label: const Text('Weekdays'),
+              selected:
+                  config.daysOfWeek.length == 5 &&
+                  !config.daysOfWeek.contains(6) &&
+                  !config.daysOfWeek.contains(7),
+              onSelected: (_) =>
+                  onChanged(config.copyWith(daysOfWeek: [1, 2, 3, 4, 5], isRecurring: true)),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        ChoiceChip(
-          label: const Text('Weekdays'),
-          selected:
-              config.daysOfWeek.length == 5 &&
-              !config.daysOfWeek.contains(6) &&
-              !config.daysOfWeek.contains(7),
-          onSelected: (_) =>
-              onChanged(config.copyWith(daysOfWeek: [1, 2, 3, 4, 5])),
-        ),
+        const SizedBox(height: 8),
+        _buildDayFilterChips(),
       ],
     );
   }
@@ -103,6 +160,8 @@ class ReminderPickerSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
+        _buildModeSelector(),
+        const SizedBox(height: 8),
         Row(
           children: [
             const Text('Alert Time: '),
@@ -110,9 +169,7 @@ class ReminderPickerSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        _buildPresetRow(),
-        const SizedBox(height: 8),
-        _buildDayFilterChips(),
+        if (config.isOneTime) _buildOneTimePresets() else _buildRepeatingPresets(),
       ],
     );
   }
@@ -154,3 +211,4 @@ class ReminderPickerSection extends StatelessWidget {
     );
   }
 }
+

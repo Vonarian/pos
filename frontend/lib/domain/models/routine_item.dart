@@ -70,6 +70,8 @@ class RoutineItem {
     return null;
   }
 
+  bool get isRecurring => reminderConfig?.isRecurring ?? (templateId != null);
+
   factory RoutineItem.fromJson(Map<String, dynamic> json) {
     return RoutineItem(
       id: json['id'] as String,

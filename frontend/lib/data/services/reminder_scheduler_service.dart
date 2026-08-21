@@ -10,7 +10,18 @@ class ReminderSchedulerService {
     if (item.status != ItemStatus.pending) return null;
     final config = item.reminderConfig;
     if (config == null || !config.enabled) return null;
-    if (!config.isScheduledForDay(now.weekday)) return null;
+
+    if (config.isOneTime) {
+      final scheduled = DateTime.tryParse(item.scheduledDate);
+      if (scheduled == null) return null;
+      if (scheduled.year != now.year ||
+          scheduled.month != now.month ||
+          scheduled.day != now.day) {
+        return null;
+      }
+    } else {
+      if (!config.isScheduledForDay(now.weekday)) return null;
+    }
 
     final parts = config.time.split(':');
     if (parts.length != 2) return null;
