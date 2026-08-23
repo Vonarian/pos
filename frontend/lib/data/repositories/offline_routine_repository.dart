@@ -28,6 +28,19 @@ class OfflineRoutineRepository {
     return rows.map(OfflineRoutineMapper.mapRowToDomain).toList();
   }
 
+  Future<List<RoutineItem>> getRoutineHistoryByTemplate(
+    String templateId,
+  ) async {
+    final rows = await db.routineDao.getRoutinesByTemplateId(templateId);
+    return rows.map(OfflineRoutineMapper.mapRowToDomain).toList();
+  }
+
+  Stream<List<RoutineItem>> watchRoutineHistoryByTemplate(String templateId) {
+    return db.routineDao.watchRoutinesByTemplateId(templateId).map((rows) {
+      return rows.map(OfflineRoutineMapper.mapRowToDomain).toList();
+    });
+  }
+
   Future<void> completeRoutine(String id, {DateTime? completedAt}) async {
     final now = completedAt ?? DateTime.now();
     await db.routineDao.updateStatus(id, 'COMPLETED', now);

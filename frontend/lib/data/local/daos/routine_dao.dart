@@ -26,6 +26,24 @@ class RoutineDao extends DatabaseAccessor<AppDatabase> with _$RoutineDaoMixin {
     return select(routineItemsTable).get();
   }
 
+  Future<List<RoutineItemsTableData>> getRoutinesByTemplateId(
+    String templateId,
+  ) {
+    return (select(routineItemsTable)
+          ..where((tbl) => tbl.templateId.equals(templateId))
+          ..orderBy([(t) => OrderingTerm(expression: t.scheduledDate)]))
+        .get();
+  }
+
+  Stream<List<RoutineItemsTableData>> watchRoutinesByTemplateId(
+    String templateId,
+  ) {
+    return (select(routineItemsTable)
+          ..where((tbl) => tbl.templateId.equals(templateId))
+          ..orderBy([(t) => OrderingTerm(expression: t.scheduledDate)]))
+        .watch();
+  }
+
   Future<RoutineItemsTableData?> getRoutineById(String id) {
     return (select(
       routineItemsTable,
