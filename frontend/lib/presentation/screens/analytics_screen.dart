@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/health_data_point.dart';
 import '../providers/metric_provider.dart';
 import '../widgets/analytics_chart_card.dart';
+import '../widgets/habit_streaks_section.dart';
 import '../widgets/log_metric_modal.dart';
 import '../widgets/metric_tab_pill.dart';
 import '../widgets/quick_log_banner.dart';
@@ -43,6 +44,8 @@ class AnalyticsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           _buildChartArea(seriesAsync, selectedMetric, selectedDays),
           const SizedBox(height: 20),
+          const HabitStreaksSection(),
+          const SizedBox(height: 10),
           QuickLogBanner(
             onLogTap: () => _showLogMetricSheet(context, ref, selectedMetric),
           ),

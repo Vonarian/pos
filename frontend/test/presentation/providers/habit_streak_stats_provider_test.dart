@@ -70,8 +70,7 @@ void main() {
         await seedTemplate('tpl_1');
         await seedItem('tpl_1', yesterday, 'COMPLETED');
 
-        // Keep the autoDispose provider alive while we await emissions.
-        container.listen(habitStreakStatsProvider('tpl_1'), (_, __) {});
+        container.listen(habitStreakStatsProvider('tpl_1'), (_, _) {});
 
         var stats =
             await container.read(habitStreakStatsProvider('tpl_1').future);
@@ -98,7 +97,7 @@ void main() {
     test('activeTemplatesProvider exposes active recurring templates', () async {
       await seedTemplate('tpl_2');
 
-      container.listen(activeTemplatesProvider, (_, __) {});
+      container.listen(activeTemplatesProvider, (_, _) {});
 
       final templates =
           await container.read(activeTemplatesProvider.future);
