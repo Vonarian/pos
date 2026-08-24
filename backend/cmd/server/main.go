@@ -21,7 +21,7 @@ import (
 	"github.com/pos/backend/internal/service"
 )
 
-var (
+const (
 	Version   = "1.0.0-dev"
 	Commit    = "none"
 	BuildDate = "unknown"
@@ -65,9 +65,9 @@ func startHTTPServer(port int, handler http.Handler) *http.Server {
 func waitForShutdown(cancel context.CancelFunc, srv *http.Server, eg *errgroup.Group) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	quitSignal := <-quit
 
-	slog.Info("Shutting down POS daemon...")
+	slog.Info("Shutting down POS daemon", "signal", quitSignal.String())
 	cancel()
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -87,6 +87,12 @@ func waitForShutdown(cancel context.CancelFunc, srv *http.Server, eg *errgroup.G
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
 	cfg := config.Load()
+
+	if cfg.Port == 0 {
+		slog.Error("Error: Port cannot be 0.")
+		os.Exit(1)
+	}
+
 	slog.Info("Starting POS daemon", "version", Version, "port", cfg.Port)
 
 	ctx, cancel := context.WithCancel(context.Background())
