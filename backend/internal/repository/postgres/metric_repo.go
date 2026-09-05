@@ -5,8 +5,36 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/pos/backend/internal/domain"
 )
+
+const upsertMetricWithExtIDQuery = `
+	INSERT INTO health_metrics (
+		id, source, metric, value, unit, start_time, end_time, external_id, synced_at
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	ON CONFLICT (external_id) DO UPDATE SET
+		source = EXCLUDED.source,
+		value = EXCLUDED.value,
+		unit = EXCLUDED.unit,
+		start_time = EXCLUDED.start_time,
+		end_time = EXCLUDED.end_time,
+		synced_at = EXCLUDED.synced_at
+`
+
+const upsertMetricWithIDQuery = `
+	INSERT INTO health_metrics (
+		id, source, metric, value, unit, start_time, end_time, external_id, synced_at
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	ON CONFLICT (id) DO UPDATE SET
+		source = EXCLUDED.source,
+		metric = EXCLUDED.metric,
+		value = EXCLUDED.value,
+		unit = EXCLUDED.unit,
+		start_time = EXCLUDED.start_time,
+		end_time = EXCLUDED.end_time,
+		synced_at = EXCLUDED.synced_at
+`
 
 type MetricRepo struct {
 	db *DB
@@ -21,47 +49,21 @@ func (m *MetricRepo) BatchUpsert(ctx context.Context, points []domain.HealthData
 		return nil
 	}
 
-	tx, err := m.db.Pool.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer tx.Rollback(ctx)
+	batch := &pgx.Batch{}
+	now := time.Now().UTC()
 
 	for _, pt := range points {
-		now := time.Now().UTC()
-		if pt.SyncedAt.IsZero() {
-			pt.SyncedAt = now
+		syncedAt := pt.SyncedAt
+		if syncedAt.IsZero() {
+			syncedAt = now
 		}
 
-		query := `
-			INSERT INTO health_metrics (
-				id, source, metric, value, unit, start_time, end_time, external_id, synced_at
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-			ON CONFLICT (external_id) DO UPDATE SET
-				source = EXCLUDED.source,
-				value = EXCLUDED.value,
-				unit = EXCLUDED.unit,
-				start_time = EXCLUDED.start_time,
-				end_time = EXCLUDED.end_time,
-				synced_at = EXCLUDED.synced_at
-		`
+		query := upsertMetricWithExtIDQuery
 		if pt.ExternalID == nil || *pt.ExternalID == "" {
-			query = `
-				INSERT INTO health_metrics (
-					id, source, metric, value, unit, start_time, end_time, external_id, synced_at
-				) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-				ON CONFLICT (id) DO UPDATE SET
-					source = EXCLUDED.source,
-					metric = EXCLUDED.metric,
-					value = EXCLUDED.value,
-					unit = EXCLUDED.unit,
-					start_time = EXCLUDED.start_time,
-					end_time = EXCLUDED.end_time,
-					synced_at = EXCLUDED.synced_at
-			`
+			query = upsertMetricWithIDQuery
 		}
 
-		_, err = tx.Exec(ctx, query,
+		batch.Queue(query,
 			pt.ID,
 			pt.Source,
 			pt.Metric,
@@ -70,14 +72,20 @@ func (m *MetricRepo) BatchUpsert(ctx context.Context, points []domain.HealthData
 			pt.StartTime,
 			pt.EndTime,
 			pt.ExternalID,
-			pt.SyncedAt,
+			syncedAt,
 		)
-		if err != nil {
-			return fmt.Errorf("failed to upsert health metric point %s: %w", pt.ID, err)
+	}
+
+	br := m.db.Pool.SendBatch(ctx, batch)
+	defer br.Close()
+
+	for range points {
+		if _, err := br.Exec(); err != nil {
+			return fmt.Errorf("failed executing batch upsert for health metric: %w", err)
 		}
 	}
 
-	return tx.Commit(ctx)
+	return br.Close()
 }
 
 func (m *MetricRepo) ListSince(ctx context.Context, since time.Time) ([]domain.HealthDataPoint, error) {

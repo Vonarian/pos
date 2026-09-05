@@ -1,7 +1,8 @@
 package ws
 
 import (
-	"encoding/json"
+	"context"
+	"encoding/json/v2"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -48,9 +49,17 @@ func NewHub() *Hub {
 	}
 }
 
-func (h *Hub) Run() {
+func (h *Hub) Run(ctx context.Context) error {
 	for {
 		select {
+		case <-ctx.Done():
+			h.mu.Lock()
+			for client := range h.clients {
+				close(client.send)
+				delete(h.clients, client)
+			}
+			h.mu.Unlock()
+			return nil
 		case client := <-h.register:
 			h.mu.Lock()
 			h.clients[client] = true

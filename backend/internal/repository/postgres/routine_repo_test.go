@@ -27,9 +27,9 @@ func TestRoutineModelLifecycle(t *testing.T) {
 
 	completedAt := now.Add(5 * time.Minute)
 	item.Status = domain.StatusCompleted
-	item.CompletedAt = &completedAt
+	item.CompletedAt = completedAt
 
-	if item.Status != domain.StatusCompleted || item.CompletedAt == nil {
+	if item.Status != domain.StatusCompleted || item.CompletedAt.IsZero() {
 		t.Fatalf("expected COMPLETED with timestamp, got %s", item.Status)
 	}
 }

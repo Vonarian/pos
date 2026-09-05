@@ -3,7 +3,8 @@ package ha
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -131,8 +132,8 @@ func (c *Client) ConnectAndListen(ctx context.Context) error {
 type EventWrapper struct {
 	Type  string `json:"type"`
 	Event struct {
-		EventType string          `json:"event_type"`
-		Data      json.RawMessage `json:"data"`
+		EventType string         `json:"event_type"`
+		Data      jsontext.Value `json:"data"`
 	} `json:"event"`
 }
 

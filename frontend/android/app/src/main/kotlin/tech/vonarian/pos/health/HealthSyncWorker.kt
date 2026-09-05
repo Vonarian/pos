@@ -1,4 +1,4 @@
-package com.pos.pos_frontend.health
+package tech.vonarian.pos.health
 
 import android.content.Context
 import android.util.Log

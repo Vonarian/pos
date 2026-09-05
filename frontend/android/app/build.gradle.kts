@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.pos.pos_frontend"
+    namespace = "tech.vonarian.pos"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.pos.pos_frontend"
+        applicationId = "tech.vonarian.pos"
         minSdk = 26
         targetSdk = 36
         versionCode = flutter.versionCode

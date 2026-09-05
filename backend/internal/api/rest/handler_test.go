@@ -3,7 +3,7 @@ package rest_test
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,7 +59,11 @@ func (m *mockRoutineRepo) UpdateStatus(ctx context.Context, id string, status do
 		return nil
 	}
 	item.Status = status
-	item.CompletedAt = completedAt
+	if completedAt != nil {
+		item.CompletedAt = *completedAt
+	} else {
+		item.CompletedAt = time.Time{}
+	}
 	item.UpdatedAt = time.Now().UTC()
 	m.items[id] = item
 	return nil
@@ -171,7 +175,7 @@ func TestSyncPushAndPull(t *testing.T) {
 	}
 
 	var pullResp rest.SyncPullResponse
-	if err := json.NewDecoder(recPull.Body).Decode(&pullResp); err != nil {
+	if err := json.UnmarshalRead(recPull.Body, &pullResp); err != nil {
 		t.Fatalf("failed to decode pull response: %v", err)
 	}
 
@@ -244,7 +248,7 @@ func TestGetMetricSeriesEndpoint(t *testing.T) {
 	}
 
 	var series []domain.HealthDataPoint
-	if err := json.NewDecoder(rec.Body).Decode(&series); err != nil {
+	if err := json.UnmarshalRead(rec.Body, &series); err != nil {
 		t.Fatalf("failed to decode metric series: %v", err)
 	}
 	if len(series) != 1 {

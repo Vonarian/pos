@@ -13,7 +13,7 @@ type RoutineItem struct {
 	TimeWindow    TimeWindow     `json:"time_window" db:"time_window"`
 	ScheduledDate string         `json:"scheduled_date" db:"scheduled_date"` // YYYY-MM-DD
 	Status        ItemStatus     `json:"status" db:"status"`
-	CompletedAt   *time.Time     `json:"completed_at,omitempty" db:"completed_at"`
+	CompletedAt   time.Time      `json:"completed_at,omitzero" db:"completed_at"`
 	Metadata      map[string]any `json:"metadata" db:"metadata"`
 	UpdatedAt     time.Time      `json:"updated_at" db:"updated_at"`
 	CreatedAt     time.Time      `json:"created_at" db:"created_at"`

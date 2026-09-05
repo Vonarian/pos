@@ -11,15 +11,15 @@ import (
 )
 
 type QuadrantView struct {
-	Date          string               `json:"date"`
-	ActiveWindow  domain.TimeWindow    `json:"active_window"`
-	Morning       []domain.RoutineItem `json:"morning"`
-	Afternoon     []domain.RoutineItem `json:"afternoon"`
-	Evening       []domain.RoutineItem `json:"evening"`
-	Night         []domain.RoutineItem `json:"night"`
-	TotalCount    int                  `json:"total_count"`
-	CompletedCount int                 `json:"completed_count"`
-	AdherenceRate float64              `json:"adherence_rate"`
+	Date           string               `json:"date"`
+	ActiveWindow   domain.TimeWindow    `json:"active_window"`
+	Morning        []domain.RoutineItem `json:"morning"`
+	Afternoon      []domain.RoutineItem `json:"afternoon"`
+	Evening        []domain.RoutineItem `json:"evening"`
+	Night          []domain.RoutineItem `json:"night"`
+	TotalCount     int                  `json:"total_count"`
+	CompletedCount int                  `json:"completed_count"`
+	AdherenceRate  float64              `json:"adherence_rate"`
 }
 
 type RoutineService struct {

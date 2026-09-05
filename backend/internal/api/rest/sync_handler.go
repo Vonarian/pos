@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"time"
 
@@ -21,14 +21,14 @@ type SyncPushResponse struct {
 }
 
 type SyncPullResponse struct {
-	Routines []domain.RoutineItem     `json:"routines"`
-	Metrics  []domain.HealthDataPoint `json:"metrics"`
-	ServerTime string                 `json:"server_time"`
+	Routines   []domain.RoutineItem     `json:"routines"`
+	Metrics    []domain.HealthDataPoint `json:"metrics"`
+	ServerTime string                   `json:"server_time"`
 }
 
 func (s *Server) handleSyncPush(w http.ResponseWriter, r *http.Request) {
 	var req SyncPushRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.UnmarshalRead(r.Body, &req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid sync push payload")
 		return
 	}

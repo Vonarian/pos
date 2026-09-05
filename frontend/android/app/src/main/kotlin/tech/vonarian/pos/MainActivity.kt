@@ -1,4 +1,4 @@
-package com.pos.pos_frontend
+package tech.vonarian.pos
 
 import androidx.annotation.NonNull
 import androidx.health.connect.client.PermissionController
@@ -6,8 +6,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.pos.pos_frontend.health.HealthConnectManager
-import com.pos.pos_frontend.health.HealthSyncWorker
+import tech.vonarian.pos.health.HealthConnectManager
+import tech.vonarian.pos.health.HealthSyncWorker
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
