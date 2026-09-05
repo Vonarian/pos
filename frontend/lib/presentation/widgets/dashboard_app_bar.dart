@@ -26,7 +26,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Icons.bolt_rounded,
+              Icons.monitor_heart_rounded,
               color: Theme.of(context).colorScheme.primary,
               size: 20,
             ),
