@@ -19,15 +19,15 @@ class OfflineRoutineSpawner {
 
   static Future<void> _selfHealTemplates(AppDatabase db) async {
     final allRoutines = await db.routineDao.getAllRoutines();
-    final activeTemplates = await db.routineTemplateDao.getActiveTemplates();
-    final activeTemplateIds = activeTemplates.map((t) => t.id).toSet();
+    final allTemplates = await db.routineTemplateDao.getAllTemplates();
+    final knownTemplateIds = allTemplates.map((t) => t.id).toSet();
 
     for (final r in allRoutines) {
       final domain = OfflineRoutineMapper.mapRowToDomain(r);
       if (!domain.isRecurring) continue;
 
       final tplId = r.templateId ?? 'tpl_${r.id}';
-      if (!activeTemplateIds.contains(tplId)) {
+      if (!knownTemplateIds.contains(tplId)) {
         final days = (domain.reminderConfig?.daysOfWeek.isNotEmpty ?? false)
             ? domain.reminderConfig!.daysOfWeek
             : const [1, 2, 3, 4, 5, 6, 7];
@@ -52,7 +52,7 @@ class OfflineRoutineSpawner {
             r.toCompanion(true).copyWith(templateId: Value(tplId)),
           );
         }
-        activeTemplateIds.add(tplId);
+        knownTemplateIds.add(tplId);
       }
     }
   }

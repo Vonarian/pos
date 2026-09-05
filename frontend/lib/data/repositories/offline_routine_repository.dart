@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import '../local/database.dart';
 import '../remote/api_client.dart';
 import '../../domain/models/routine_item.dart';
+import '../native/notification_service.dart';
 import 'offline_routine_mapper.dart';
 import 'offline_routine_spawner.dart';
 import 'offline_routine_sync_handler.dart';
@@ -41,47 +42,43 @@ class OfflineRoutineRepository {
     });
   }
 
+  Future<void> _syncAction(Future<void> Function() call, String id) async {
+    if (apiClient == null) return;
+    try {
+      await call();
+      await db.routineDao.markAsSynced([id]);
+    } catch (_) {}
+  }
+
   Future<void> completeRoutine(String id, {DateTime? completedAt}) async {
     final now = completedAt ?? DateTime.now();
     await db.routineDao.updateStatus(id, 'COMPLETED', now);
-
-    if (apiClient != null) {
-      try {
-        await apiClient!.completeRoutine(id, completedAt: now);
-        await db.routineDao.markAsSynced([id]);
-      } catch (_) {}
-    }
+    await _syncAction(() => apiClient!.completeRoutine(id, completedAt: now), id);
   }
 
   Future<void> skipRoutine(String id) async {
     await db.routineDao.updateStatus(id, 'SKIPPED', null);
-
-    if (apiClient != null) {
-      try {
-        await apiClient!.skipRoutine(id);
-        await db.routineDao.markAsSynced([id]);
-      } catch (_) {}
-    }
+    await _syncAction(() => apiClient!.skipRoutine(id), id);
   }
 
   Future<void> revertRoutine(String id) async {
     await db.routineDao.updateStatus(id, 'PENDING', null);
-
-    if (apiClient != null) {
-      try {
-        await apiClient!.revertRoutine(id);
-        await db.routineDao.markAsSynced([id]);
-      } catch (_) {}
-    }
+    await _syncAction(() => apiClient!.revertRoutine(id), id);
   }
 
   Future<void> deleteRoutine(String id, {bool deleteEverywhere = true}) async {
     final item = await db.routineDao.getRoutineById(id);
+    await NativeNotificationService.cancelHabitReminder(id);
     await db.routineDao.deleteRoutine(id);
 
-    if (deleteEverywhere && item?.templateId != null) {
-      await db.routineTemplateDao.deactivateTemplate(item!.templateId!);
-      await db.routineDao.deleteRoutinesByTemplateId(item.templateId!);
+    final tplId = item?.templateId ?? 'tpl_$id';
+    if (deleteEverywhere) {
+      final matching = await db.routineDao.getRoutinesByTemplateId(tplId);
+      for (final r in matching) {
+        await NativeNotificationService.cancelHabitReminder(r.id);
+      }
+      await db.routineTemplateDao.deactivateTemplate(tplId);
+      await db.routineDao.deleteRoutinesByTemplateId(tplId);
     }
   }
 
@@ -89,6 +86,9 @@ class OfflineRoutineRepository {
     RoutineItem item, {
     bool applyToFuture = true,
   }) async {
+    if (item.reminderConfig?.enabled == false) {
+      await NativeNotificationService.cancelHabitReminder(item.id);
+    }
     final existing = await db.routineDao.getRoutineById(item.id);
     final effectiveTemplateId =
         item.templateId ?? existing?.templateId ?? 'tpl_${item.id}';
@@ -127,41 +127,22 @@ class OfflineRoutineRepository {
       );
     }
 
-    if (apiClient != null) {
-      try {
-        await apiClient!.pushSync(routines: [itemToSave], metrics: []);
-        await db.routineDao.markAsSynced([itemToSave.id]);
-      } catch (_) {}
-    }
+    await _syncAction(
+      () => apiClient!.pushSync(routines: [itemToSave], metrics: []),
+      itemToSave.id,
+    );
   }
 
   Future<void> deferRoutine(String id) async {
     final item = await db.routineDao.getRoutineById(id);
     if (item == null) return;
 
-    final currentWindow = TimeWindow.fromString(item.timeWindow);
-    TimeWindow nextWindow = currentWindow;
-    switch (currentWindow) {
-      case TimeWindow.morning:
-        nextWindow = TimeWindow.afternoon;
-        break;
-      case TimeWindow.afternoon:
-        nextWindow = TimeWindow.evening;
-        break;
-      case TimeWindow.evening:
-      case TimeWindow.night:
-        nextWindow = TimeWindow.night;
-        break;
-    }
-
-    await db.routineDao.updateTimeWindow(id, nextWindow.value);
-
-    if (apiClient != null) {
-      try {
-        await apiClient!.deferRoutine(id);
-        await db.routineDao.markAsSynced([id]);
-      } catch (_) {}
-    }
+    final cur = TimeWindow.fromString(item.timeWindow);
+    final next = cur == TimeWindow.morning
+        ? TimeWindow.afternoon
+        : (cur == TimeWindow.afternoon ? TimeWindow.evening : TimeWindow.night);
+    await db.routineDao.updateTimeWindow(id, next.value);
+    await _syncAction(() => apiClient!.deferRoutine(id), id);
   }
 
   Future<void> createRoutine(RoutineItem item) async {

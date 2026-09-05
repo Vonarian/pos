@@ -9,6 +9,12 @@ class RoutineTemplateDao extends DatabaseAccessor<AppDatabase>
     with _$RoutineTemplateDaoMixin {
   RoutineTemplateDao(super.db);
 
+  Future<List<RoutineTemplatesTableData>> getAllTemplates() {
+    return (select(routineTemplatesTable)
+          ..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
+        .get();
+  }
+
   Future<List<RoutineTemplatesTableData>> getActiveTemplates() {
     return (select(routineTemplatesTable)
           ..where((tbl) => tbl.isActive.equals(true))

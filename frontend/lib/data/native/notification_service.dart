@@ -6,16 +6,18 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../domain/models/routine_item.dart';
 import 'background_notification_handler.dart';
+import 'notification_constants.dart';
+import 'notification_details_builder.dart';
 
 class NativeNotificationService {
-  static const habitChannelId = 'pos_habit_reminders';
-  static const habitChannelName = 'Habit & Medication Reminders';
-  static const windowChannelId = 'pos_window_nudges';
-  static const windowChannelName = 'Time Window Closing Alerts';
+  static const habitChannelId = NotificationConstants.habitChannelId;
+  static const habitChannelName = NotificationConstants.habitChannelName;
+  static const windowChannelId = NotificationConstants.windowChannelId;
+  static const windowChannelName = NotificationConstants.windowChannelName;
 
-  static const actionDone = 'ACTION_DONE';
-  static const actionSnooze = 'ACTION_SNOOZE';
-  static const actionSkip = 'ACTION_SKIP';
+  static const actionDone = NotificationConstants.actionDone;
+  static const actionSnooze = NotificationConstants.actionSnooze;
+  static const actionSkip = NotificationConstants.actionSkip;
 
   static FlutterLocalNotificationsPlugin? _pluginInstance;
 
@@ -79,43 +81,13 @@ class NativeNotificationService {
     } catch (_) {}
   }
 
-  static NotificationDetails _buildHabitDetails(int snoozeMinutes) {
-    final actions = [
-      const AndroidNotificationAction(
-        actionDone,
-        'Mark Done',
-        showsUserInterface: false,
-      ),
-      AndroidNotificationAction(
-        actionSnooze,
-        'Snooze (${snoozeMinutes}m)',
-        showsUserInterface: false,
-      ),
-      const AndroidNotificationAction(
-        actionSkip,
-        'Skip',
-        showsUserInterface: false,
-      ),
-    ];
-
-    final android = AndroidNotificationDetails(
-      habitChannelId,
-      habitChannelName,
-      importance: Importance.max,
-      priority: Priority.high,
-      actions: actions,
-      category: AndroidNotificationCategory.reminder,
-    );
-
-    return NotificationDetails(android: android);
-  }
-
   static Future<void> scheduleHabitReminder({
     required String routineId,
     required String title,
     required String body,
     required DateTime scheduledDate,
     required int snoozeMinutes,
+    DateTimeComponents? matchDateTimeComponents = DateTimeComponents.time,
   }) async {
     try {
       final id = getNotificationIdForRoutine(routineId);
@@ -131,9 +103,10 @@ class NativeNotificationService {
         title: title,
         body: body,
         scheduledDate: tzDate,
-        notificationDetails: _buildHabitDetails(snoozeMinutes),
+        notificationDetails:
+            NotificationDetailsBuilder.buildHabitDetails(snoozeMinutes),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
+        matchDateTimeComponents: matchDateTimeComponents,
         payload: payload,
       );
     } catch (_) {}
@@ -145,12 +118,14 @@ class NativeNotificationService {
     required DateTime targetTime,
     required int snoozeMinutes,
   }) async {
+    await cancelHabitReminder(routineId);
     await scheduleHabitReminder(
       routineId: routineId,
       title: title,
       body: 'Snoozed reminder ($title)',
       scheduledDate: targetTime,
       snoozeMinutes: snoozeMinutes,
+      matchDateTimeComponents: null,
     );
   }
 
@@ -191,6 +166,17 @@ class NativeNotificationService {
   static Future<void> cancelWindowNudge(TimeWindow window) async {
     try {
       await plugin.cancel(id: getNotificationIdForWindow(window));
+    } catch (_) {}
+  }
+
+  static Future<void> cancelOrphanReminders(Set<int> validIds) async {
+    try {
+      final pending = await plugin.pendingNotificationRequests();
+      for (final req in pending) {
+        if (!validIds.contains(req.id)) {
+          await plugin.cancel(id: req.id);
+        }
+      }
     } catch (_) {}
   }
 }

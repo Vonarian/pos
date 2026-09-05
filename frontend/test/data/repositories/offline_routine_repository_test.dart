@@ -192,4 +192,40 @@ void main() {
     expect(tomorrowRoutines.first.title, 'Legacy Creatine');
     expect(tomorrowRoutines.first.scheduledDate, '2026-08-16');
   });
+
+  test('offline repository deleteRoutine deletes items, deactivates template and removes all instances', () async {
+    final now = DateTime.now();
+    final item = RoutineItem(
+      id: 'habit-to-delete-1',
+      title: 'Habit To Delete',
+      category: 'Focus',
+      timeWindow: TimeWindow.morning,
+      scheduledDate: '2026-08-15',
+      status: ItemStatus.pending,
+      metadata: const {
+        'reminder': {
+          'enabled': true,
+          'is_recurring': true,
+          'time': '08:00',
+          'days_of_week': [1, 2, 3, 4, 5, 6, 7],
+        },
+      },
+      updatedAt: now,
+      createdAt: now,
+    );
+
+    await repo.createRoutine(item);
+    await repo.getRoutinesForDate('2026-08-16');
+
+    expect((await repo.getRoutinesForDate('2026-08-15')).length, 1);
+    expect((await repo.getRoutinesForDate('2026-08-16')).length, 1);
+
+    await repo.deleteRoutine('habit-to-delete-1', deleteEverywhere: true);
+
+    expect((await repo.getRoutinesForDate('2026-08-15')), isEmpty);
+    expect((await repo.getRoutinesForDate('2026-08-16')), isEmpty);
+
+    final activeTemplates = await db.routineTemplateDao.getActiveTemplates();
+    expect(activeTemplates.any((t) => t.title == 'Habit To Delete'), isFalse);
+  });
 }

@@ -66,17 +66,24 @@ class ReminderSchedulerService {
     DateTime? currentTime,
   }) async {
     final now = currentTime ?? DateTime.now();
-    await _syncHabitReminders(routines, now);
-    await _syncWindowNudges(routines, settings, now);
+    final habitIds = await _syncHabitReminders(routines, now);
+    final windowIds = await _syncWindowNudges(routines, settings, now);
+    await NativeNotificationService.cancelOrphanReminders({
+      ...habitIds,
+      ...windowIds,
+    });
   }
 
-  static Future<void> _syncHabitReminders(
+  static Future<Set<int>> _syncHabitReminders(
     List<RoutineItem> routines,
     DateTime now,
   ) async {
+    final activeIds = <int>{};
     for (final item in routines) {
       final trigger = calculateReminderTrigger(item: item, now: now);
       if (trigger != null) {
+        final id = NativeNotificationService.getNotificationIdForRoutine(item.id);
+        activeIds.add(id);
         final snoozeMins = item.reminderConfig?.snoozeMinutes ?? 15;
         await NativeNotificationService.scheduleHabitReminder(
           routineId: item.id,
@@ -85,18 +92,19 @@ class ReminderSchedulerService {
           scheduledDate: trigger,
           snoozeMinutes: snoozeMins,
         );
-      } else if (item.status == ItemStatus.completed ||
-          item.status == ItemStatus.skipped) {
+      } else {
         await NativeNotificationService.cancelHabitReminder(item.id);
       }
     }
+    return activeIds;
   }
 
-  static Future<void> _syncWindowNudges(
+  static Future<Set<int>> _syncWindowNudges(
     List<RoutineItem> routines,
     WindowSettings settings,
     DateTime now,
   ) async {
+    final activeIds = <int>{};
     for (final window in TimeWindow.values) {
       final itemsInWindow = routines
           .where((e) => e.timeWindow == window)
@@ -109,6 +117,8 @@ class ReminderSchedulerService {
       );
 
       if (shouldTrigger) {
+        final id = NativeNotificationService.getNotificationIdForWindow(window);
+        activeIds.add(id);
         final pending = itemsInWindow
             .where((e) => e.status == ItemStatus.pending)
             .map((e) => e.title)
@@ -129,5 +139,6 @@ class ReminderSchedulerService {
         await NativeNotificationService.cancelWindowNudge(window);
       }
     }
+    return activeIds;
   }
 }
