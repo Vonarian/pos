@@ -29,6 +29,10 @@ class OfflineRoutineRepository {
     return rows.map(OfflineRoutineMapper.mapRowToDomain).toList();
   }
 
+  Future<List<RoutineItem>> getSchedulableRoutines(String todayDate) {
+    return OfflineRoutineSpawner.collectSchedulableRoutines(db, todayDate);
+  }
+
   Future<List<RoutineItem>> getRoutineHistoryByTemplate(
     String templateId,
   ) async {
