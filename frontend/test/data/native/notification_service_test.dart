@@ -75,5 +75,13 @@ void main() {
       expect(payload, contains('"title":"Creatine 5g"'));
       expect(payload, contains('"snoozeMinutes":15'));
     });
+
+    test('configureLocalTimezone sets tz.local to matching IANA location', () {
+      NativeNotificationService.configureLocalTimezone('Asia/Tehran');
+      expect(
+        NativeNotificationService.currentLocalTimezoneName,
+        'Asia/Tehran',
+      );
+    });
   });
 }

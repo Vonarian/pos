@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../local/database.dart';
+import '../../domain/models/routine_item.dart';
 import 'offline_routine_mapper.dart';
 
 class OfflineRoutineSpawner {
@@ -104,6 +105,58 @@ class OfflineRoutineSpawner {
     if (companions.isNotEmpty) {
       await db.routineDao.batchUpsertRoutines(companions);
     }
+  }
+
+  static Future<List<RoutineItem>> collectSchedulableRoutines(
+    AppDatabase db,
+    String todayDate,
+  ) async {
+    await ensureSpawnedForDate(db, todayDate);
+    final allRows = await db.routineDao.getAllRoutines();
+    final activeTemplates = await db.routineTemplateDao.getActiveTemplates();
+    final result = <RoutineItem>[];
+    final representedTemplates = <String>{};
+
+    for (final row in allRows) {
+      final isToday = row.scheduledDate == todayDate;
+      final isFuturePending =
+          row.scheduledDate.compareTo(todayDate) > 0 && row.status == 'PENDING';
+      if (isToday || isFuturePending) {
+        result.add(OfflineRoutineMapper.mapRowToDomain(row));
+        if (row.templateId != null) {
+          representedTemplates.add(row.templateId!);
+        }
+      }
+    }
+
+    for (final tpl in activeTemplates) {
+      if (!representedTemplates.contains(tpl.id)) {
+        result.add(_templateToSyntheticItem(tpl, todayDate));
+      }
+    }
+    return result;
+  }
+
+  static RoutineItem _templateToSyntheticItem(
+    RoutineTemplatesTableData tpl,
+    String todayDate,
+  ) {
+    Map<String, dynamic> meta = {};
+    try {
+      meta = jsonDecode(tpl.metadataJson) as Map<String, dynamic>;
+    } catch (_) {}
+    return RoutineItem(
+      id: '${tpl.id}_$todayDate',
+      templateId: tpl.id,
+      title: tpl.title,
+      category: tpl.category,
+      timeWindow: TimeWindow.fromString(tpl.timeWindow),
+      scheduledDate: todayDate,
+      status: ItemStatus.pending,
+      metadata: meta,
+      updatedAt: tpl.updatedAt,
+      createdAt: tpl.createdAt,
+    );
   }
 }
 

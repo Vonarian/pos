@@ -68,14 +68,14 @@ void main() {
       expect(scheduledTime, DateTime(2026, 8, 15, 21, 00));
     });
 
-    test('returns null for one-time reminder if scheduled for different date', () {
-      final config = const ReminderConfig(
+    test('calculates scheduled time for one-time reminder on future date and null on past date', () {
+      const config = ReminderConfig(
         enabled: true,
         isRecurring: false,
         time: '21:00',
       );
 
-      final item = RoutineItem(
+      final futureItem = RoutineItem(
         id: 'reminder-tomorrow-1',
         title: 'Tomorrow reminder',
         category: 'HABIT',
@@ -87,16 +87,26 @@ void main() {
         createdAt: now,
       );
 
-      final scheduledTime = ReminderSchedulerService.calculateReminderTrigger(
-        item: item,
-        now: now,
+      expect(
+        ReminderSchedulerService.calculateReminderTrigger(
+          item: futureItem,
+          now: now,
+        ),
+        DateTime(2026, 8, 16, 21, 0),
       );
 
-      expect(scheduledTime, isNull);
+      final pastDateItem = futureItem.copyWith(scheduledDate: '2026-08-14');
+      expect(
+        ReminderSchedulerService.calculateReminderTrigger(
+          item: pastDateItem,
+          now: now,
+        ),
+        isNull,
+      );
     });
 
-    test('returns null if reminder is disabled or in the past', () {
-      final disabledConfig = const ReminderConfig(
+    test('returns null if reminder is disabled or one-time reminder is in the past', () {
+      const disabledConfig = ReminderConfig(
         enabled: false,
         time: '09:30',
       );
@@ -121,23 +131,74 @@ void main() {
         isNull,
       );
 
-      final pastConfig = const ReminderConfig(enabled: true, time: '07:00');
-      final pastItem = disabledItem.copyWith(
-        metadata: {'reminder': pastConfig.toJson()},
+      const pastOneTimeConfig = ReminderConfig(
+        enabled: true,
+        isRecurring: false,
+        time: '07:00',
+      );
+      final pastOneTimeItem = disabledItem.copyWith(
+        metadata: {'reminder': pastOneTimeConfig.toJson()},
       );
 
       expect(
         ReminderSchedulerService.calculateReminderTrigger(
-          item: pastItem,
+          item: pastOneTimeItem,
           now: now,
         ),
         isNull,
       );
     });
 
-    test('returns null if reminder is not scheduled for today weekday', () {
-      // 2026-08-15 is Saturday (weekday = 6)
-      final weekdaysOnlyConfig = const ReminderConfig(
+    test('rolls recurring habit to tomorrow when today time passed or already completed', () {
+      const recurringPastToday = ReminderConfig(
+        enabled: true,
+        isRecurring: true,
+        time: '07:00',
+      );
+
+      final itemPastToday = RoutineItem(
+        id: 'habit-recurring-past',
+        templateId: 'tpl_habit_1',
+        title: 'Morning Thyroid Med',
+        category: 'MEDS',
+        timeWindow: TimeWindow.morning,
+        scheduledDate: '2026-08-15',
+        status: ItemStatus.pending,
+        metadata: {'reminder': recurringPastToday.toJson()},
+        updatedAt: now,
+        createdAt: now,
+      );
+
+      expect(
+        ReminderSchedulerService.calculateReminderTrigger(
+          item: itemPastToday,
+          now: now,
+        ),
+        DateTime(2026, 8, 16, 7, 0),
+      );
+
+      const recurringFutureToday = ReminderConfig(
+        enabled: true,
+        isRecurring: true,
+        time: '09:30',
+      );
+      final completedToday = itemPastToday.copyWith(
+        status: ItemStatus.completed,
+        metadata: {'reminder': recurringFutureToday.toJson()},
+      );
+
+      expect(
+        ReminderSchedulerService.calculateReminderTrigger(
+          item: completedToday,
+          now: now,
+        ),
+        DateTime(2026, 8, 16, 9, 30),
+      );
+    });
+
+    test('calculates next valid weekday for weekday-only recurring habit on weekend', () {
+      // 2026-08-15 is Saturday (weekday = 6) -> next valid is Monday 2026-08-17
+      const weekdaysOnlyConfig = ReminderConfig(
         enabled: true,
         isRecurring: true,
         time: '09:30',
@@ -146,6 +207,7 @@ void main() {
 
       final item = RoutineItem(
         id: 'habit-3',
+        templateId: 'tpl_habit_3',
         title: 'Weekday Habit',
         category: 'MEDS',
         timeWindow: TimeWindow.morning,
@@ -158,7 +220,49 @@ void main() {
 
       expect(
         ReminderSchedulerService.calculateReminderTrigger(item: item, now: now),
-        isNull,
+        DateTime(2026, 8, 17, 9, 30),
+      );
+    });
+
+    test('preserves active snooze time for pending item and ignores snooze if completed', () {
+      final snoozedUntil = DateTime(2026, 8, 15, 8, 15);
+      final snoozedConfig = ReminderConfig(
+        enabled: true,
+        isRecurring: true,
+        time: '07:30',
+        lastSnoozedUntil: snoozedUntil,
+      );
+
+      final pendingSnoozed = RoutineItem(
+        id: 'habit-snoozed',
+        templateId: 'tpl_snoozed',
+        title: 'Omega-3',
+        category: 'MEDS',
+        timeWindow: TimeWindow.morning,
+        scheduledDate: '2026-08-15',
+        status: ItemStatus.pending,
+        metadata: {'reminder': snoozedConfig.toJson()},
+        updatedAt: now,
+        createdAt: now,
+      );
+
+      expect(
+        ReminderSchedulerService.calculateReminderTrigger(
+          item: pendingSnoozed,
+          now: now,
+        ),
+        snoozedUntil,
+      );
+
+      final completedSnoozed = pendingSnoozed.copyWith(
+        status: ItemStatus.completed,
+      );
+      expect(
+        ReminderSchedulerService.calculateReminderTrigger(
+          item: completedSnoozed,
+          now: now,
+        ),
+        DateTime(2026, 8, 16, 7, 30),
       );
     });
 
