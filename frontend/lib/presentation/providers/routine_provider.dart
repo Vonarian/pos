@@ -105,10 +105,16 @@ final quadrantStateProvider = Provider.autoDispose<QuadrantState>((ref) {
   );
 
   final routines = routinesAsync.value ?? [];
-
-  // Reconcile and synchronize alarms
-  ReminderSchedulerService.syncAll(routines: routines, settings: settings);
-
+  if (routinesAsync.hasValue) {
+    final repo = ref.read(offlineRoutineRepositoryProvider);
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    repo.getSchedulableRoutines(todayStr).then((schedulable) {
+      ReminderSchedulerService.syncAll(
+        routines: schedulable,
+        settings: settings,
+      );
+    });
+  }
   final morning = <RoutineItem>[];
   final afternoon = <RoutineItem>[];
   final evening = <RoutineItem>[];

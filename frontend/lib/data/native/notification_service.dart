@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../domain/models/routine_item.dart';
@@ -50,34 +49,26 @@ class NativeNotificationService {
     });
   }
 
+  static String get currentLocalTimezoneName => tz.local.name;
+
+  static void configureLocalTimezone(String? timeZoneName) {
+    NotificationDetailsBuilder.configureLocalTimezone(timeZoneName);
+  }
+
   static Future<void> initialize() async {
-    try {
-      tz.initializeTimeZones();
-    } catch (_) {}
-
-    const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
-    const darwinSettings = DarwinInitializationSettings();
-    const linuxSettings = LinuxInitializationSettings(
-      defaultActionName: 'Open POS',
-    );
-
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: darwinSettings,
-      macOS: darwinSettings,
-      linux: linuxSettings,
-    );
-
+    await NotificationDetailsBuilder.syncDeviceTimezone();
     try {
       await plugin.initialize(
-        settings: initSettings,
-        onDidReceiveNotificationResponse: (response) {
-          notificationTapBackground(response);
-        },
+        settings: NotificationDetailsBuilder.buildInitSettings(),
+        onDidReceiveNotificationResponse: notificationTapBackground,
         onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
+      final androidPlugin = plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      await androidPlugin?.requestNotificationsPermission();
+      await androidPlugin?.requestExactAlarmsPermission();
     } catch (_) {}
   }
 
@@ -138,20 +129,12 @@ class NativeNotificationService {
     try {
       final id = getNotificationIdForWindow(window);
       final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
-      const android = AndroidNotificationDetails(
-        windowChannelId,
-        windowChannelName,
-        importance: Importance.high,
-        priority: Priority.high,
-        category: AndroidNotificationCategory.reminder,
-      );
-
       await plugin.zonedSchedule(
         id: id,
         title: title,
         body: body,
         scheduledDate: tzDate,
-        notificationDetails: const NotificationDetails(android: android),
+        notificationDetails: NotificationDetailsBuilder.buildWindowDetails(),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     } catch (_) {}

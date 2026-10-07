@@ -228,4 +228,66 @@ void main() {
     final activeTemplates = await db.routineTemplateDao.getActiveTemplates();
     expect(activeTemplates.any((t) => t.title == 'Habit To Delete'), isFalse);
   });
+
+  test('getSchedulableRoutines returns today routines, future pending reminders, and off-day templates', () async {
+    final now = DateTime(2026, 8, 15, 8, 0); // Saturday
+    // 1. Today's pending routine
+    await repo.createRoutine(
+      RoutineItem(
+        id: 'today-1',
+        title: 'Today Supplement',
+        category: 'MEDS',
+        timeWindow: TimeWindow.morning,
+        scheduledDate: '2026-08-15',
+        status: ItemStatus.pending,
+        metadata: const {
+          'reminder': {'enabled': true, 'is_recurring': false, 'time': '09:00'},
+        },
+        updatedAt: now,
+        createdAt: now,
+      ),
+    );
+    // 2. Tomorrow's one-time reminder created while browsing calendar
+    await repo.createRoutine(
+      RoutineItem(
+        id: 'tomorrow-once-1',
+        title: 'Sunday Call',
+        category: 'HABIT',
+        timeWindow: TimeWindow.evening,
+        scheduledDate: '2026-08-16',
+        status: ItemStatus.pending,
+        metadata: const {
+          'reminder': {'enabled': true, 'is_recurring': false, 'time': '19:00'},
+        },
+        updatedAt: now,
+        createdAt: now,
+      ),
+    );
+    // 3. Weekday-only recurring template created on Friday (not spawned on Saturday)
+    await repo.createRoutine(
+      RoutineItem(
+        id: 'weekday-1',
+        templateId: 'tpl_weekday_1',
+        title: 'Weekday Standup',
+        category: 'Focus',
+        timeWindow: TimeWindow.morning,
+        scheduledDate: '2026-08-14',
+        status: ItemStatus.completed,
+        metadata: const {
+          'reminder': {
+            'enabled': true,
+            'is_recurring': true,
+            'time': '09:30',
+            'days_of_week': [1, 2, 3, 4, 5],
+          },
+        },
+        updatedAt: now,
+        createdAt: now,
+      ),
+    );
+
+    final schedulable = await repo.getSchedulableRoutines('2026-08-15');
+    final titles = schedulable.map((r) => r.title).toSet();
+    expect(titles, containsAll(['Today Supplement', 'Sunday Call', 'Weekday Standup']));
+  });
 }
